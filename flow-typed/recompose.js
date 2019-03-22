@@ -1,3 +1,3 @@
-declare module 'recompose' {
-  declare module.exports: any;
-}
+// declare module 'recompose' {
+//   declare module.exports: any;
+// }

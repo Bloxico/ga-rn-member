@@ -1,4 +1,4 @@
-// flow-typed signature: 535577e0dd480d7a8376f167e014890c
+// flow-typed signature: 3239c39f400636fc762033679b9b07f3
 // flow-typed version: <<STUB>>/@babel/runtime_v^7.3.4/flow_v0.95.1
 
 /**
@@ -99,6 +99,14 @@ declare module '@babel/runtime/helpers/classStaticPrivateFieldSpecGet' {
 }
 
 declare module '@babel/runtime/helpers/classStaticPrivateFieldSpecSet' {
+  declare module.exports: any;
+}
+
+declare module '@babel/runtime/helpers/classStaticPrivateMethodGet' {
+  declare module.exports: any;
+}
+
+declare module '@babel/runtime/helpers/classStaticPrivateMethodSet' {
   declare module.exports: any;
 }
 
@@ -203,6 +211,14 @@ declare module '@babel/runtime/helpers/esm/classStaticPrivateFieldSpecGet' {
 }
 
 declare module '@babel/runtime/helpers/esm/classStaticPrivateFieldSpecSet' {
+  declare module.exports: any;
+}
+
+declare module '@babel/runtime/helpers/esm/classStaticPrivateMethodGet' {
+  declare module.exports: any;
+}
+
+declare module '@babel/runtime/helpers/esm/classStaticPrivateMethodSet' {
   declare module.exports: any;
 }
 
@@ -631,6 +647,12 @@ declare module '@babel/runtime/helpers/classStaticPrivateFieldSpecGet.js' {
 declare module '@babel/runtime/helpers/classStaticPrivateFieldSpecSet.js' {
   declare module.exports: $Exports<'@babel/runtime/helpers/classStaticPrivateFieldSpecSet'>;
 }
+declare module '@babel/runtime/helpers/classStaticPrivateMethodGet.js' {
+  declare module.exports: $Exports<'@babel/runtime/helpers/classStaticPrivateMethodGet'>;
+}
+declare module '@babel/runtime/helpers/classStaticPrivateMethodSet.js' {
+  declare module.exports: $Exports<'@babel/runtime/helpers/classStaticPrivateMethodSet'>;
+}
 declare module '@babel/runtime/helpers/construct.js' {
   declare module.exports: $Exports<'@babel/runtime/helpers/construct'>;
 }
@@ -708,6 +730,12 @@ declare module '@babel/runtime/helpers/esm/classStaticPrivateFieldSpecGet.js' {
 }
 declare module '@babel/runtime/helpers/esm/classStaticPrivateFieldSpecSet.js' {
   declare module.exports: $Exports<'@babel/runtime/helpers/esm/classStaticPrivateFieldSpecSet'>;
+}
+declare module '@babel/runtime/helpers/esm/classStaticPrivateMethodGet.js' {
+  declare module.exports: $Exports<'@babel/runtime/helpers/esm/classStaticPrivateMethodGet'>;
+}
+declare module '@babel/runtime/helpers/esm/classStaticPrivateMethodSet.js' {
+  declare module.exports: $Exports<'@babel/runtime/helpers/esm/classStaticPrivateMethodSet'>;
 }
 declare module '@babel/runtime/helpers/esm/construct.js' {
   declare module.exports: $Exports<'@babel/runtime/helpers/esm/construct'>;
