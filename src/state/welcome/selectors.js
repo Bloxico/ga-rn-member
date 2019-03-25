@@ -1,1 +1,1 @@
-export const getPartnerId = ({ welcome: { partnerId } }) => ({ partnerId });
+export const isLogged = ({ welcome: { isLogged } }) => ({ isLogged });

@@ -1,0 +1,11 @@
+{
+  "plugins": [
+    ["module-resolver", {
+      "root": ["./src"],
+      "alias": {
+        "ui": "./src/components/ui"
+      },
+      "extensions": [".ios.js", ".android.js", ".js", ".json"]
+    }]
+  ]
+}

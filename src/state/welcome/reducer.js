@@ -9,28 +9,73 @@ import initialState from './state';
 export default handleActions(
   new Map([
     [
-      actions.PARTNER,
+      actions.LOGIN,
       state => ({
         ...state,
-        inProgress: true,
+        loginInProgress: true,
       }),
     ],
     [
-      actions.PARTNER_FAIL,
-      (state, { payload }) => ({
+      actions.LOGIN_FAIL,
+      state => ({
         ...state,
-        inProgress: false,
-        fail: true,
-        ...(payload && payload.message ? { error: payload.message } : {}),
+        loginInProgress: false,
+        loginFail: true,
       }),
     ],
     [
-      actions.PARTNER_SUCCESS,
+      actions.LOGIN_SUCCESS,
+      state => ({
+        ...state,
+        loginInProgress: false,
+        loginFail: false,
+      }),
+    ],
+    [
+      actions.IS_LOGGED,
       (state, { payload }) => ({
         ...state,
-        ...payload,
-        inProgress: false,
-        fail: true,
+        isLogged: payload,
+        isLoggedInProgress: true,
+      }),
+    ],
+    [
+      actions.IS_LOGGED_FAIL,
+      state => ({
+        ...state,
+        isLoggedInProgress: false,
+        isLoggedFail: true,
+      }),
+    ],
+    [
+      actions.IS_LOGGED_SUCCESS,
+      state => ({
+        ...state,
+        isLoggedInProgress: false,
+        isLoggedFail: false,
+      }),
+    ],
+    [
+      actions.LOGOUT,
+      state => ({
+        ...state,
+        logoutInProgress: true,
+      }),
+    ],
+    [
+      actions.LOGOUT_FAIL,
+      state => ({
+        ...state,
+        logoutInProgress: false,
+        logoutFail: true,
+      }),
+    ],
+    [
+      actions.LOGOUT_SUCCESS,
+      state => ({
+        ...state,
+        logoutInProgress: false,
+        logoutFail: false,
       }),
     ],
   ]),

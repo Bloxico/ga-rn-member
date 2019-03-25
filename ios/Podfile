@@ -12,6 +12,8 @@ target 'GAMember' do
   pod 'GoogleSignIn', '~> 4.4.0'
 
 
+  pod 'RNGestureHandler', :path => '../node_modules/react-native-gesture-handler'
+
 end
 
 
