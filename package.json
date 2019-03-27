@@ -6,9 +6,12 @@
     "start": "node node_modules/react-native/local-cli/cli.js start",
     "ios": "react-native run-ios",
     "android": "react-native run-android",
+    "bundle:android": "cd android && ./gradlew assembleRelease",
+    "ios:dep": "cd ios && pod install",
     "link": "react-native link react-native-firebase react-native-google-signin react-native-gesture-handler",
     "format": "./node_modules/.bin/prettier --config=\".prettierrc.json\" --write \"src/**/*.js\" \"*.js\"",
-    "lint": "eslint --cache --config .eslintrc --format=node_modules/eslint-formatter-pretty \"src/**/*.js\" \"*.js\""
+    "lint": "eslint --cache --config .eslintrc --format=node_modules/eslint-formatter-pretty \"src/**/*.js\" \"*.js\"",
+    "flow-typed": "yarn flow-typed install"
   },
   "husky": {
     "hooks": {
