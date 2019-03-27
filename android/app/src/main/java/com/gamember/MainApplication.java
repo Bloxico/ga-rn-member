@@ -5,11 +5,13 @@ import android.app.Application;
 import com.facebook.react.ReactApplication;
 import com.swmansion.gesturehandler.react.RNGestureHandlerPackage;
 import io.invertase.firebase.RNFirebasePackage;
+import io.invertase.firebase.database.RNFirebaseDatabasePackage;
 import co.apptailor.googlesignin.RNGoogleSigninPackage;
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.shell.MainReactPackage;
 import com.facebook.soloader.SoLoader;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,7 +30,8 @@ public class MainApplication extends Application implements ReactApplication {
           new MainReactPackage(),
             new RNGestureHandlerPackage(),
             new RNFirebasePackage(),
-            new RNGoogleSigninPackage()
+            new RNGoogleSigninPackage(),
+            new RNFirebaseDatabasePackage()
       );
     }
 
@@ -47,5 +50,6 @@ public class MainApplication extends Application implements ReactApplication {
   public void onCreate() {
     super.onCreate();
     SoLoader.init(this, /* native exopackage */ false);
+    FirebaseDatabase.getInstance().setPersistenceEnabled(true);
   }
 }

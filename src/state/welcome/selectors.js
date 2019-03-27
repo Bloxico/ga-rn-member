@@ -1,1 +1,4 @@
-export const isLogged = ({ welcome: { isLogged } }) => ({ isLogged });
+export const isLoggedInProgress = ({ welcome: { isLoggedInProgress } }) => ({
+  isLoggedInProgress,
+});
+export const getUser = ({ welcome: { user } }) => ({ user });

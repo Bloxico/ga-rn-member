@@ -1,72 +1,21 @@
 {
   "project_info": {
-    "project_number": "993690801094",
-    "firebase_url": "https://greenauth-36f21.firebaseio.com",
-    "project_id": "greenauth-36f21",
-    "storage_bucket": "greenauth-36f21.appspot.com"
+    "project_number": "351332438899",
+    "firebase_url": "https://default-demo-app-f2ce.firebaseio.com",
+    "project_id": "default-demo-app-f2ce",
+    "storage_bucket": "default-demo-app-f2ce.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:993690801094:android:aaeb315da00122e8",
-        "android_client_info": {
-          "package_name": "com.bloxico.ga_rn_member"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "993690801094-en1hi0scfbjoutab1qq07i042vu9dobf.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.bloxico.ga_rn_member",
-            "certificate_hash": "34d59a8c0697ab92509ae48e32a99344f145391a"
-          }
-        },
-        {
-          "client_id": "993690801094-qoqan11ro0hbef8in5p438ao14stf9am.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyDZJMVefPDySh_IxK4uiDF5zSvXShMWj3M"
-        }
-      ],
-      "services": {
-        "analytics_service": {
-          "status": 1
-        },
-        "appinvite_service": {
-          "status": 2,
-          "other_platform_oauth_client": [
-            {
-              "client_id": "993690801094-28rfe9s7kf0igl4guovnjlijnoqitmj1.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "993690801094-e1boom1f7lip68jk7m0frqdjim1nhf0n.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "org.reactjs.native.example.googleSignInGA"
-              }
-            }
-          ]
-        },
-        "ads_service": {
-          "status": 2
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:993690801094:android:b66c8da0ce6f10f1",
+        "mobilesdk_app_id": "1:351332438899:android:b66c8da0ce6f10f1",
         "android_client_info": {
           "package_name": "com.gamember"
         }
       },
       "oauth_client": [
         {
-          "client_id": "993690801094-r3mp6l64nqk9g2fg1hcqtj0r4gp6kr5e.apps.googleusercontent.com",
+          "client_id": "351332438899-igsa8bu50r8kkl3c1ijc0viv76ba2rm4.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.gamember",
@@ -74,13 +23,13 @@
           }
         },
         {
-          "client_id": "993690801094-qoqan11ro0hbef8in5p438ao14stf9am.apps.googleusercontent.com",
+          "client_id": "351332438899-mh3l0fj8cvogt2f9qv07s2odlfvi4t86.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDZJMVefPDySh_IxK4uiDF5zSvXShMWj3M"
+          "current_key": "AIzaSyD_dBDHpUd0FC9wZjNK5Jh_fmLUZ6haBw8"
         }
       ],
       "services": {
@@ -91,15 +40,8 @@
           "status": 2,
           "other_platform_oauth_client": [
             {
-              "client_id": "993690801094-28rfe9s7kf0igl4guovnjlijnoqitmj1.apps.googleusercontent.com",
+              "client_id": "351332438899-kklempdbv0m1nnkel12svjdiajk1bsad.apps.googleusercontent.com",
               "client_type": 3
-            },
-            {
-              "client_id": "993690801094-e1boom1f7lip68jk7m0frqdjim1nhf0n.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "org.reactjs.native.example.googleSignInGA"
-              }
             }
           ]
         },
@@ -110,28 +52,36 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:993690801094:android:feaf31e2a50c2244",
+        "mobilesdk_app_id": "1:351332438899:android:f36173e948059ccb",
         "android_client_info": {
-          "package_name": "com.googlesigninga"
+          "package_name": "gcm.play.android.samples.com.gcmquickstart"
         }
       },
       "oauth_client": [
         {
-          "client_id": "993690801094-31acqcvdf8km0ne37mub7srqipbm7nvs.apps.googleusercontent.com",
+          "client_id": "351332438899-no459jlt0el78pvttbjeuem1849mv6tj.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.googlesigninga",
-            "certificate_hash": "988885d97f7dc1315cc4381cf3928612aeabc6d3"
+            "package_name": "gcm.play.android.samples.com.gcmquickstart",
+            "certificate_hash": "e329ffcecb8544529634b455ccd80361a89aa3e2"
           }
         },
         {
-          "client_id": "993690801094-qoqan11ro0hbef8in5p438ao14stf9am.apps.googleusercontent.com",
+          "client_id": "351332438899-1e91hcbq8gq7v7fdrre093ipcd2hidhi.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "gcm.play.android.samples.com.gcmquickstart",
+            "certificate_hash": "8d79320e185912b5d01d084c97ec9721754770de"
+          }
+        },
+        {
+          "client_id": "351332438899-mh3l0fj8cvogt2f9qv07s2odlfvi4t86.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDZJMVefPDySh_IxK4uiDF5zSvXShMWj3M"
+          "current_key": "AIzaSyD_dBDHpUd0FC9wZjNK5Jh_fmLUZ6haBw8"
         }
       ],
       "services": {
@@ -142,15 +92,8 @@
           "status": 2,
           "other_platform_oauth_client": [
             {
-              "client_id": "993690801094-28rfe9s7kf0igl4guovnjlijnoqitmj1.apps.googleusercontent.com",
+              "client_id": "351332438899-kklempdbv0m1nnkel12svjdiajk1bsad.apps.googleusercontent.com",
               "client_type": 3
-            },
-            {
-              "client_id": "993690801094-e1boom1f7lip68jk7m0frqdjim1nhf0n.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "org.reactjs.native.example.googleSignInGA"
-              }
             }
           ]
         },

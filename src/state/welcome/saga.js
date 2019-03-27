@@ -1,17 +1,45 @@
 // @flow
 
-import { all, takeEvery, put } from 'redux-saga/effects';
+import { all, takeEvery, put, call } from 'redux-saga/effects';
 import { GoogleSignin } from 'react-native-google-signin';
+import firebase from 'react-native-firebase';
 
-import * as actions from './actions';
+// $FlowIssue
+import * as actions from '@actions';
 
 export function* login$({ payload: { navigation } }: any): Generator<*, *, *> {
   try {
-    yield GoogleSignin.signIn();
+    const { user } = yield call([GoogleSignin, GoogleSignin.signIn]);
 
-    yield navigation.navigate('Dashboard');
+    if (user) {
+      yield put(actions.loginSuccess({ user }));
 
-    yield put(actions.loginSuccess());
+      yield navigation.navigate('Dashboard');
+
+      const emailEscaped = user.email.replace(/[.]/g, ',');
+
+      yield firebase
+        .database()
+        .ref(`/users/${emailEscaped}`)
+        .once(
+          'value',
+          snapshot => {
+            if (!snapshot.val())
+              firebase
+                .database()
+                .ref('/users')
+                .set({
+                  [`${emailEscaped}`]: {
+                    email: user.email,
+                    name: user.name,
+                  },
+                });
+          },
+          () => {
+            // TODO@tolja error implement
+          },
+        );
+    }
   } catch (error) {
     yield put(actions.loginFail());
   }
@@ -23,11 +51,25 @@ export function* isLogged$({
   try {
     yield GoogleSignin.configure();
 
+    yield firebase.app();
+
     const isLogged = yield GoogleSignin.isSignedIn();
 
-    if (isLogged) yield navigation.navigate('Dashboard');
+    if (isLogged) {
+      const userInfo = yield GoogleSignin.getCurrentUser();
 
-    yield put(actions.isLoggedSuccess({ isLogged }));
+      if (userInfo) {
+        const { user } = userInfo;
+
+        yield put(actions.isLoggedSuccess({ user }));
+      } else {
+        const { user } = yield GoogleSignin.signInSilently();
+
+        yield put(actions.isLoggedSuccess({ user }));
+      }
+      yield navigation.navigate('Dashboard');
+    }
+    yield put(actions.isLoggedSuccess());
   } catch (error) {
     yield put(actions.isLoggedFail());
   }
@@ -37,9 +79,9 @@ export function* logout$({ payload: { navigation } }: any): Generator<*, *, *> {
   try {
     yield GoogleSignin.signOut();
 
-    yield navigation.navigate('Welcome');
-
     yield put(actions.logoutSuccess());
+
+    yield navigation.navigate('Welcome');
   } catch (error) {
     yield put(actions.logoutFail());
   }

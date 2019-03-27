@@ -3,10 +3,14 @@
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import { login, isLogged } from '../../../../state/actions';
+// $FlowIssue
+import { login, isLogged } from '@actions';
+// $FlowIssue
+import { isLoggedInProgress } from '@selectors';
+
 import Register from './Register';
 
-const mapStateToProps = state => ({ ...state });
+const mapStateToProps = state => ({ ...isLoggedInProgress(state) });
 
 const actions = { login, isLogged };
 

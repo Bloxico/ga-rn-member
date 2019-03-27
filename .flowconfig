@@ -20,6 +20,7 @@
 .*/node_modules/metro/.*
 
 [include]
+./src/
 
 [libs]
 node_modules/react-native/Libraries/react-native/react-native-interface.js
@@ -30,6 +31,15 @@ node_modules/react-native/flow-github/
 emoji=true
 module.system.node.resolve_dirname=node_modules
 module.system.node.resolve_dirname=./src
+;module.system.node.resolve_dirname=src
+;module.system.node.resolve_dirname=./src/services
+;module.system.node.resolve_dirname=./src/state/actions
+;module.system.node.resolve_dirname=@actions
+;module.name_mapper='^actions\/\(.*\)$' -> '<PROJECT_ROOT>/src/state/actions/\1'
+module.name_mapper='^@actions\/\(.*\)$' -> '<PROJECT_ROOT>/src/state/actions/\1'
+module.name_mapper='^@ui\/\(.*\)$' -> '<PROJECT_ROOT>/src/components/ui/\1'
+module.name_mapper='^@constants\/\(.*\)$' -> '<PROJECT_ROOT>/src/constants/\1'
+module.name_mapper='^@http\/\(.*\)$' -> '<PROJECT_ROOT>/src/state/actions/\1'
 esproposal.optional_chaining=enable
 esproposal.nullish_coalescing=enable
 

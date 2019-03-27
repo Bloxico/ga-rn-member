@@ -10,7 +10,7 @@ const styles = {
 };
 
 type Props = {
-  size: string,
+  size?: string,
 };
 
 const Spinner = ({ size }: Props) => (

@@ -5,7 +5,9 @@ import { View } from 'react-native';
 import { Provider } from 'react-redux';
 import { createAppContainer, createSwitchNavigator } from 'react-navigation';
 
-import configureStore from '../state/configureStore';
+// $FlowIssue
+import configureStore from '@state/configureStore';
+
 import RegisterPage from './views/Auth/Register';
 import PortalPage from './views/Portal';
 
@@ -23,7 +25,7 @@ export default class App extends Component<Props> {
   render() {
     return (
       <Provider store={store}>
-        <View>
+        <View style={{ flex: 1 }}>
           <AppContainer />
         </View>
       </Provider>

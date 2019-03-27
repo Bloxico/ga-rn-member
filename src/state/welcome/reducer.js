@@ -25,8 +25,9 @@ export default handleActions(
     ],
     [
       actions.LOGIN_SUCCESS,
-      state => ({
+      (state, { payload }) => ({
         ...state,
+        ...payload,
         loginInProgress: false,
         loginFail: false,
       }),
@@ -49,8 +50,9 @@ export default handleActions(
     ],
     [
       actions.IS_LOGGED_SUCCESS,
-      state => ({
+      (state, { payload }) => ({
         ...state,
+        ...payload,
         isLoggedInProgress: false,
         isLoggedFail: false,
       }),
@@ -75,6 +77,7 @@ export default handleActions(
       state => ({
         ...state,
         logoutInProgress: false,
+        isLoggedInProgress: false,
         logoutFail: false,
       }),
     ],

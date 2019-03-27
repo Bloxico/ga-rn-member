@@ -7,7 +7,6 @@ export type StateT = {
   isLoggedFail: boolean,
   logoutInProgress: boolean,
   logoutFail: boolean,
-  user: any,
 };
 
 const initialState: StateT = {
@@ -17,7 +16,6 @@ const initialState: StateT = {
   isLoggedFail: false,
   logoutInProgress: false,
   logoutFail: false,
-  user: {},
 };
 
 export default initialState;
