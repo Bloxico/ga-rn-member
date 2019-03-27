@@ -4,12 +4,30 @@
   "private": true,
   "scripts": {
     "start": "node node_modules/react-native/local-cli/cli.js start",
-    "test": "jest",
-    "format": "./node_modules/.bin/prettier --config=\".prettierrc.json\" --write \"src/**/*.js\" \"*.js\""
+    "ios": "react-native run-ios",
+    "android": "react-native run-android",
+    "bundle:android": "cd android && ./gradlew assembleRelease",
+    "ios:dep": "cd ios && pod install",
+    "link": "react-native link react-native-firebase react-native-google-signin react-native-gesture-handler",
+    "format": "./node_modules/.bin/prettier --config=\".prettierrc.json\" --write \"src/**/*.js\" \"*.js\"",
+    "lint": "eslint --cache --config .eslintrc --format=node_modules/eslint-formatter-pretty \"src/**/*.js\" \"*.js\"",
+    "flow-typed": "yarn flow-typed install"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn run format",
+      "pre-push": "yarn run lint"
+    }
   },
   "dependencies": {
     "react": "16.8.3",
     "react-native": "0.59.1",
+    "react-native-axios": "^0.17.1",
+    "react-native-base64": "^0.0.2",
+    "react-native-firebase": "^5.2.3",
+    "react-native-gesture-handler": "^1.1.0",
+    "react-native-google-signin": "^1.2.1",
+    "react-navigation": "^3.5.1",
     "react-redux": "^6.0.1",
     "recompose": "^0.30.0",
     "redux": "^4.0.1",
@@ -20,18 +38,24 @@
   "devDependencies": {
     "@babel/core": "^7.3.4",
     "@babel/runtime": "^7.3.4",
+    "babel-cli": "^6.26.0",
     "babel-eslint": "^10.0.1",
     "babel-jest": "^24.5.0",
+    "babel-plugin-module-resolver": "^3.2.0",
+    "babel-preset-react-native": "^4.0.1",
     "eslint": "^5.15.3",
     "eslint-config-airbnb": "^17.1.0",
     "eslint-config-prettier": "^4.1.0",
+    "eslint-formatter-pretty": "^2.1.1",
     "eslint-plugin-flowtype": "^3.4.2",
     "eslint-plugin-import": "^2.16.0",
     "eslint-plugin-jsx-a11y": "^6.2.1",
+    "eslint-plugin-module-resolver": "^0.8.0",
     "eslint-plugin-prettier": "^3.0.1",
     "eslint-plugin-react": "^7.12.4",
     "flow-bin": "^0.95.1",
     "flow-typed": "^2.5.1",
+    "husky": "^1.3.1",
     "jest": "^24.5.0",
     "metro-react-native-babel-preset": "^0.53.1",
     "prettier": "^1.16.4",

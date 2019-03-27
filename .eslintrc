@@ -5,21 +5,15 @@
     "prettier/react"
   ],
   "rules": {
-    "no-unused-vars": 1,
-    "object-curly-spacing": 2,
     "import/first": 1,
     "import/extensions": 0,
-    "camelcase": 0,
+    "no-console": 2,
+    "module-resolver/use-alias": 2,
     "import/no-extraneous-dependencies": 0,
     "import/no-unresolved": 0,
     "import/prefer-default-export": 0,
     "func-names": 0,
-    "valid-typeof": 1,
-    "global-require": 1,
-    "arrow-body-style": 1,
-    "no-underscore-dangle": 1,
-    "no-shadow": 0,
-    "no-plusplus": 1,
+    "no-shadow": 1,
     "prefer-promise-reject-errors": 1,
     "import/no-webpack-loader-syntax": 1,
     "react/forbid-prop-types": 1,
@@ -35,7 +29,6 @@
     "spaced-comment": 1,
     "react/prop-types": 1,
     "react/require-default-props": 0,
-    "react/jsx-indent": 0,
     "react/jsx-curly-brace-presence": 1,
     "react/jsx-filename-extension": [
       1,
@@ -57,7 +50,8 @@
     ]
   },
   "plugins": [
-    "prettier"
+    "prettier",
+    "module-resolver"
   ],
   "parser": "babel-eslint",
   "parserOptions": {
@@ -69,6 +63,6 @@
     }
   },
   "globals": {
-    "Generator": true,
+    "Generator": true
   }
 }
