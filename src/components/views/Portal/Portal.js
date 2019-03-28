@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { View, Text } from 'react-native';
+import QRCode from 'react-native-qrcode';
 
 import { Button, CardSection, Card, Header } from '@ui';
 
@@ -30,6 +31,14 @@ class Portal extends Component<Props> {
           <CardSection>
             <Text>Welcome </Text>
             <Text>{user.name}</Text>
+          </CardSection>
+          <CardSection>
+            <QRCode
+              value={user.email}
+              size={200}
+              bgColor="green"
+              fgColor="#FFF"
+            />
           </CardSection>
           <CardSection>
             <Button onPress={this.logout}>Sign out</Button>
