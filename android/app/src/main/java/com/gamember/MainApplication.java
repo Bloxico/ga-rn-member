@@ -3,6 +3,8 @@ package com.gamember;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import com.rctbattery.BatteryManagerPackage;
+import com.robinpowered.react.battery.DeviceBatteryPackage;
 import com.swmansion.gesturehandler.react.RNGestureHandlerPackage;
 import io.invertase.firebase.RNFirebasePackage;
 import io.invertase.firebase.database.RNFirebaseDatabasePackage;
@@ -28,6 +30,8 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new BatteryManagerPackage(),
+            new DeviceBatteryPackage(),
             new RNGestureHandlerPackage(),
             new RNFirebasePackage(),
             new RNGoogleSigninPackage(),

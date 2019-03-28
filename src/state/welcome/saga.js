@@ -24,6 +24,7 @@ export function* login$({ payload: { navigation } }: any): Generator<*, *, *> {
         .once(
           'value',
           snapshot => {
+            console.log(snapshot.val());
             if (!snapshot.val())
               firebase
                 .database()

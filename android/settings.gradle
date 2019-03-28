@@ -1,4 +1,8 @@
 rootProject.name = 'GAMember'
+include ':react-native-battery'
+project(':react-native-battery').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-battery/android')
+include ':react-native-device-battery'
+project(':react-native-device-battery').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-device-battery/android')
 include ':react-native-gesture-handler'
 project(':react-native-gesture-handler').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-gesture-handler/android')
 include ':react-native-firebase'

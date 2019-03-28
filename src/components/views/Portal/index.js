@@ -3,16 +3,25 @@
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
+import {
+  logout,
+  ecdRedirect,
+  isLogged,
+  addBattery,
+  fetchBattery,
+  // $FlowIssue
+} from '@actions';
 // $FlowIssue
-import { logout, ecdRedirect, isLogged } from '@actions';
-// $FlowIssue
-import { getUser } from '@selectors';
+import { getUser, getBatteryList } from '@selectors';
 
 import Portal from './Portal';
 
-const mapStateToProps = state => ({ ...getUser(state) });
+const mapStateToProps = state => ({
+  ...getUser(state),
+  ...getBatteryList(state),
+});
 
-const actions = { logout, ecdRedirect, isLogged };
+const actions = { logout, ecdRedirect, isLogged, addBattery, fetchBattery };
 
 export default compose(
   connect(

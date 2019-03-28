@@ -1,7 +1,7 @@
 // @flow
 
 import React, { Component } from 'react';
-import { View } from 'react-native';
+import { ScrollView } from 'react-native';
 import { Provider } from 'react-redux';
 import { createAppContainer, createSwitchNavigator } from 'react-navigation';
 
@@ -25,9 +25,9 @@ export default class App extends Component<Props> {
   render() {
     return (
       <Provider store={store}>
-        <View style={{ flex: 1 }}>
+        <ScrollView style={{ flex: 1 }}>
           <AppContainer />
-        </View>
+        </ScrollView>
       </Provider>
     );
   }

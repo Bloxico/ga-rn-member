@@ -1,21 +1,19 @@
 // @flow
 
 export type StateT = {
-  loginInProgress: boolean,
-  loginFail: boolean,
-  isLoggedInProgress: boolean,
-  isLoggedFail: boolean,
-  logoutInProgress: boolean,
-  logoutFail: boolean,
+  redirectInProgress: boolean,
+  redirectFail: boolean,
+  batteryInProgress: boolean,
+  batteryFetchInProgress: boolean,
+  batteryList: [],
 };
 
 const initialState: StateT = {
-  loginInProgress: false,
-  loginFail: false,
-  isLoggedInProgress: false,
-  isLoggedFail: false,
-  logoutInProgress: false,
-  logoutFail: false,
+  redirectInProgress: false,
+  redirectFail: false,
+  batteryInProgress: false,
+  batteryFetchInProgress: false,
+  batteryList: [],
 };
 
 export default initialState;
