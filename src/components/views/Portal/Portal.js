@@ -3,6 +3,7 @@ import {
   View,
   Text,
   FlatList,
+  AppState,
   Alert,
   NativeModules,
   NativeEventEmitter,
@@ -31,10 +32,12 @@ type Props = {
 };
 type State = {
   batteryList: [],
+  appState: any,
 };
 class Portal extends Component<Props, State> {
   state = {
     batteryList: [],
+    appState: AppState.currentState,
   };
 
   componentDidMount(): void {
@@ -60,6 +63,7 @@ class Portal extends Component<Props, State> {
     // }.bind(this));
     // to attach a listener
     this.s = DeviceBattery.addListener(this.onBatteryStateChanged);
+    AppState.addEventListener('change', this.handleAppStateChange);
   }
 
   componentDidUpdate(): void {
@@ -67,8 +71,22 @@ class Portal extends Component<Props, State> {
   }
 
   componentWillUnmount(): void {
+    AppState.removeEventListener('change', this.handleAppStateChange);
+
     // this.s.remove();
   }
+
+  handleAppStateChange = nextAppState => {
+    if (
+      this.state.appState.match(/inactive|background/) &&
+      nextAppState === 'active'
+    ) {
+      console.log('App has come to the foreground!');
+    }
+    this.setState({ appState: nextAppState });
+    DeviceBattery.addListener(this.onBatteryStateChanged);
+    Alert.alert(nextAppState);
+  };
 
   // batteryList = async () => {
   //   const { user } = this.props;
