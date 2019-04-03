@@ -5,6 +5,7 @@ export type StateT = {
   redirectFail: boolean,
   batteryInProgress: boolean,
   batteryFetchInProgress: boolean,
+  pushTokenInProgress: boolean,
   batteryList: [],
 };
 
@@ -13,6 +14,7 @@ const initialState: StateT = {
   redirectFail: false,
   batteryInProgress: false,
   batteryFetchInProgress: false,
+  pushTokenInProgress: false,
   batteryList: [],
 };
 

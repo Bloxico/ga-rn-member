@@ -23,3 +23,11 @@ export const BATTERY_FETCH_FAIL = `${BATTERY_FETCH} fail`;
 export const fetchBattery = createAction(BATTERY_FETCH);
 export const fetchBatterySuccess = createAction(BATTERY_FETCH_SUCCESS);
 export const fetchBatteryFail = createAction(BATTERY_FETCH_FAIL);
+
+export const PUSH_TOKEN = '[PUSH_TOKEN]';
+export const PUSH_TOKEN_SUCCESS = `${PUSH_TOKEN} success`;
+export const PUSH_TOKEN_FAIL = `${PUSH_TOKEN} fail`;
+
+export const pushToken = createAction(PUSH_TOKEN);
+export const pushTokenSuccess = createAction(PUSH_TOKEN_SUCCESS);
+export const pushTokenFail = createAction(PUSH_TOKEN_FAIL);

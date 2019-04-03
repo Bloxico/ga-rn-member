@@ -3,6 +3,8 @@ package com.gamember;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import com.dieam.reactnativepushnotification.ReactNativePushNotificationPackage;
+import com.transistorsoft.rnbackgroundfetch.RNBackgroundFetchPackage;
 import com.rctbattery.BatteryManagerPackage;
 import com.robinpowered.react.battery.DeviceBatteryPackage;
 import com.swmansion.gesturehandler.react.RNGestureHandlerPackage;
@@ -30,6 +32,8 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new ReactNativePushNotificationPackage(),
+            new RNBackgroundFetchPackage(),
             new BatteryManagerPackage(),
             new DeviceBatteryPackage(),
             new RNGestureHandlerPackage(),

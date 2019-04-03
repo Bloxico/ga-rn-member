@@ -1,0 +1,21 @@
+{
+  "name": "react-native-battery",
+  "version": "0.1.13",
+  "summary": "Get battery level/status of a device",
+  "homepage": "https://github.com/oojr/react-native-battery",
+  "authors": "Olajide Ogundipe Jr",
+  "license": "MIT",
+  "platforms": {
+    "ios": "8.0"
+  },
+  "source": {
+    "git": "https://github.com/oojr/react-native-battery",
+    "tag": "v0.1.13"
+  },
+  "source_files": "ios/RCTBattery/*.{h,m}",
+  "dependencies": {
+    "React": [
+
+    ]
+  }
+}

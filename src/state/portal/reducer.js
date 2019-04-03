@@ -74,6 +74,27 @@ export default handleActions(
         batteryFetchInProgress: false,
       }),
     ],
+    [
+      actions.PUSH_TOKEN,
+      state => ({
+        ...state,
+        pushTokenInProgress: true,
+      }),
+    ],
+    [
+      actions.PUSH_TOKEN_SUCCESS,
+      state => ({
+        ...state,
+        pushTokenInProgress: false,
+      }),
+    ],
+    [
+      actions.PUSH_TOKEN_FAIL,
+      state => ({
+        ...state,
+        pushTokenInProgress: false,
+      }),
+    ],
   ]),
   { ...initialState },
 );

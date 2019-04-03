@@ -2,7 +2,9 @@
   "extends": [
     "airbnb",
     "prettier",
-    "prettier/react"
+    "prettier/react",
+    "eslint:recommended",
+    "plugin:react/recommended"
   ],
   "rules": {
     "import/first": 1,
@@ -50,6 +52,7 @@
     ]
   },
   "plugins": [
+    "react",
     "prettier",
     "module-resolver"
   ],
@@ -59,6 +62,7 @@
     "sourceType": "module",
     "ecmaFeatures": {
       "jsx": true,
+      "modules": true,
       "experimentalObjectRestSpread": true
     }
   },

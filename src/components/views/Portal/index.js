@@ -9,6 +9,7 @@ import {
   isLogged,
   addBattery,
   fetchBattery,
+  pushToken,
   // $FlowIssue
 } from '@actions';
 // $FlowIssue
@@ -21,7 +22,14 @@ const mapStateToProps = state => ({
   ...getBatteryList(state),
 });
 
-const actions = { logout, ecdRedirect, isLogged, addBattery, fetchBattery };
+const actions = {
+  logout,
+  ecdRedirect,
+  isLogged,
+  addBattery,
+  fetchBattery,
+  pushToken,
+};
 
 export default compose(
   connect(
