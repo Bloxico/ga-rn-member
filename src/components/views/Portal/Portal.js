@@ -1,28 +1,12 @@
 import React, { Component } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  AppState,
-  Alert,
-  NativeModules,
-  NativeEventEmitter,
-  DeviceEventEmitter,
-} from 'react-native';
+import { View, Text } from 'react-native';
 import QRCode from 'react-native-qrcode';
 import DeviceBattery from 'react-native-device-battery';
 import BackgroundFetch from 'react-native-background-fetch';
-import firebase, { Notification } from 'react-native-firebase';
-import VoipPushNotification from 'react-native-voip-push-notification';
-// import { BatteryManager } from '';
+import PushNotification from 'react-native-push-notification';
+// import VoipPushNotification from 'react-native-voip-push-notification';
 
 import { Button, CardSection, Card, Header } from '@ui';
-import PushNotification from 'react-native-push-notification';
-// import firebase from 'react-native-firebase';
-// import * as actions from '../../../state/portal/actions';
-
-// const { BatteryManager } = NativeModules.BatteryManager;
-// const batteryManagerEmitter = new NativeEventEmitter(BatteryManager);
 
 type Props = {
   logout: Function,
@@ -32,20 +16,13 @@ type Props = {
   addBattery: Function,
   fetchBattery: Function,
   batteryList: [],
+  pushToken: Function,
 };
-type State = {
-  batteryList: [],
-  appState: any,
-};
-class Portal extends Component<Props, State> {
-  state = {
-    batteryList: [],
-    appState: AppState.currentState,
-  };
 
+class Portal extends Component<Props> {
   componentDidMount(): void {
     const { addBattery, user, fetchBattery, pushToken } = this.props;
-    // Configure it.
+    
     BackgroundFetch.configure(
       {
         minimumFetchInterval: 15, // <-- minutes (15 is minimum allowed)
@@ -53,26 +30,20 @@ class Portal extends Component<Props, State> {
         startOnBoot: true, // <-- Android-only
       },
       () => {
-        console.log('[js] Received background-fetch event');
         DeviceBattery.getBatteryLevel().then(level => {
-          // console.log(level); // between 0 and 1
           DeviceBattery.isCharging().then(isCharging => {
-            // console.log(isCharging); // true or false
-            // Alert.alert(`${level.toString()} ${user.email} ${isCharging}`);
             addBattery({ level, isCharging, user, isBackground: true });
-            BackgroundFetch.finish(BackgroundFetch.FETCH_RESULT_NEW_DATA);
-            // firebase.database().ref()
           });
         });
       },
-      error => {
-        console.log('[js] RNBackgroundFetch failed to start');
+      () => {
+        // TODO@tolja implement error
       },
     );
 
     PushNotification.configure({
       onRegister: function(token) {
-        pushToken({ token });
+        pushToken({ token, user });
       },
       onNotification: function(notification) {
         DeviceBattery.getBatteryLevel().then(level => {
@@ -81,19 +52,18 @@ class Portal extends Component<Props, State> {
               level,
               isCharging,
               user,
-              isBackground: 'notifikacija',
+              isBackground: false,
               notification,
             });
           });
         });
       },
-      senderId: '351332438899',
       permissions: {
-        alert: true,
-        badge: true,
-        sound: true,
+        alert: false,
+        badge: false,
+        sound: false,
       },
-      popInitialNotification: true,
+      popInitialNotification: false,
       requestPermissions: true,
     });
 
@@ -152,45 +122,6 @@ class Portal extends Component<Props, State> {
     //   });
     // });
   }
-
-  // componentDidUpdate(): void {
-  //   console.log(this.props);
-  // }
-
-  // componentWillUnmount(): void {
-  // AppState.removeEventListener('change', this.handleAppStateChange);
-  // this.notificationDisplayedListener();
-  // this.notificationListener();
-  // this.s.remove();
-  // }
-
-  // handleAppStateChange = nextAppState => {
-  //   if (
-  //     this.state.appState.match(/inactive|background/) &&
-  //     nextAppState === 'active'
-  //   ) {
-  //     console.log('App has come to the foreground!');
-  //   }
-  //   this.setState({ appState: nextAppState });
-  //   DeviceBattery.addListener(this.onBatteryStateChanged);
-  //   Alert.alert(nextAppState);
-  // };
-
-  // batteryList = async () => {
-  //   const { user } = this.props;
-  //   const emailEscaped = user.email.replace(/[.]/g, ',');
-  //   await firebase
-  //     .database()
-  //     .ref(`/users/${emailEscaped}`)
-  //     .on('value', snapshot => {
-  //       // Alert.alert(`${JSON.stringify(snapshot)}`);
-  //       if (snapshot && snapshot.val().batteryLevel)
-  //         console.log(snapshot.val().batteryLevel);
-  //       // thunk.dispatch(actions.fetchBatterySuccess({ batteryList }))
-  //       batteryList = snapshot.val().batteryLevel;
-  //       // put(actions.fetchBatterySuccess({ batteryList }));
-  //     });
-  // };
 
   onBatteryStateChanged = state => {
     const { addBattery, user } = this.props;
