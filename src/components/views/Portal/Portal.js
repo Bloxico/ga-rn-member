@@ -22,7 +22,7 @@ type Props = {
 class Portal extends Component<Props> {
   componentDidMount(): void {
     const { addBattery, user, fetchBattery, pushToken } = this.props;
-    
+
     BackgroundFetch.configure(
       {
         minimumFetchInterval: 15, // <-- minutes (15 is minimum allowed)
