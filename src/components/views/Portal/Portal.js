@@ -20,8 +20,12 @@ type Props = {
 };
 
 class Portal extends Component<Props> {
+  componentWillMount() {
+    const { fetchBattery, user } = this.props;
+    fetchBattery({ user });
+  }
   componentDidMount(): void {
-    const { addBattery, user, fetchBattery, pushToken } = this.props;
+    const { addBattery, user, pushToken } = this.props;
 
     BackgroundFetch.configure(
       {
@@ -72,8 +76,6 @@ class Portal extends Component<Props> {
         addBattery({ level, isCharging, user, isBackground: false });
       });
     });
-
-    fetchBattery({ user });
 
     this.s = DeviceBattery.addListener(this.onBatteryStateChanged);
 
@@ -163,17 +165,18 @@ class Portal extends Component<Props> {
           <CardSection>
             <Button onPress={this.ecdRedirect}>Go to ECD</Button>
           </CardSection>
-          {batteryList.map(item => (
-            <CardSection key={item.time}>
-              <Text>
-                Percent: {item.level},{' '}
-                {(item.isCharging && 'Charging') || 'Not Charging'}, Time:{' '}
-                {item.time && new Date(item.time).toLocaleDateString()}{' '}
-                {item.time && new Date(item.time).toLocaleTimeString()}{' '}
-                {(item.isBackground && 'In Background') || ''}
-              </Text>
-            </CardSection>
-          ))}
+          {batteryList &&
+            batteryList.map(item => (
+              <CardSection key={item.time}>
+                <Text>
+                  Percent: {item.level},{' '}
+                  {(item.isCharging && 'Charging') || 'Not Charging'}, Time:{' '}
+                  {item.time && new Date(item.time).toLocaleDateString()}{' '}
+                  {item.time && new Date(item.time).toLocaleTimeString()}{' '}
+                  {(item.isBackground && 'In Background') || ''}
+                </Text>
+              </CardSection>
+            ))}
         </Card>
       </View>
     );

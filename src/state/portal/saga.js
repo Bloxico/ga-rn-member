@@ -21,22 +21,135 @@ export function* fetchBattery$({ payload: { user } }: any): Generator<*, *, *> {
 
     yield firebase
       .database()
-      .ref(`/users/${emailEscaped}`)
+      .ref(`/users/${emailEscaped}/batteryLevel`)
       .once(
         'value',
         snapshot => {
-          if (snapshot && snapshot.val().batteryLevel)
-            batteryList = snapshot.val().batteryLevel;
-
-          put(actions.fetchBatterySuccess({ batteryList }));
+          snapshot.forEach(snapshotChild => {
+            batteryList.push(snapshotChild.val());
+          });
         },
         () => {
           // TODO@tolja implement error
         },
       );
+    batteryList.map(battery => {
+      console.log(battery);
+    });
+    const a = batteryList.reduce((re, obj) => {
+      console.log(331, re);
+      console.log(441, obj);
+      if (!Array.isArray(re) || !re.length) {
+        re.push({
+          time: obj.time,
+          points: 0,
+          reward: 0,
+          percentTillReward: 0,
+          rewardTime: undefined,
+          level: obj.level,
+        });
+      } else {
+        const oldDate = new Date(re[0].time);
+        const curDate = new Date(obj.time);
+        const utcPrev = Date.UTC(
+          oldDate.getFullYear(),
+          oldDate.getMonth(),
+          oldDate.getDate(),
+          oldDate.getHours(),
+          oldDate.getMinutes(),
+        );
+        const utcCurrent = Date.UTC(
+          curDate.getFullYear(),
+          curDate.getMonth(),
+          curDate.getDate(),
+          curDate.getHours(),
+          curDate.getMinutes(),
+        );
+        const points = Math.floor((utcCurrent - utcPrev) / (1000 * 60));
+        console.log('POINST', points);
+        re[0].time = obj.time;
+        re[0].points += points;
+        if (
+          points > 720 ||
+          obj.isCharging ||
+          obj.level > re[0].level ||
+          points < 0
+        ) {
+          console.log('Majku ti ');
+          let currPoints = re[0].points;
+          re[0].points = 0;
+          let reward = 0;
+          let perToReward = 0;
+          if (points > 720 || obj.level > re[0].level || points < 0)
+            currPoints -= points;
+          if (currPoints > 0) {
+            if (currPoints < 540) {
+              perToReward = currPoints / 540;
+            } else if (currPoints >= 540 && currPoints < 1020) {
+              ++reward;
+              perToReward = (currPoints - 540) / 480;
+            } else if (currPoints >= 1020 && currPoints < 1470) {
+              reward += 2;
+              perToReward = (currPoints - 1020) / 450;
+            } else if (currPoints >= 1470 && currPoints < 1890) {
+              reward += 3;
+              perToReward = (currPoints - 1470) / 420;
+            } else if (currPoints >= 1890 && currPoints < 2280) {
+              reward += 4;
+              perToReward = (currPoints - 1890) / 390;
+            } else if (currPoints >= 2280 && currPoints < 2640) {
+              reward += 5;
+              perToReward = (currPoints - 2280) / 360;
+            } else if (currPoints >= 2640 && currPoints < 2970) {
+              reward += 6;
+              perToReward = (currPoints - 2640) / 330;
+            } else if (currPoints >= 2970 && currPoints < 3270) {
+              reward += 7;
+              perToReward = (currPoints - 2970) / 300;
+            } else if (currPoints >= 3270 && currPoints < 3540) {
+              reward += 8;
+              perToReward = (currPoints - 3270) / 270;
+            } else if (currPoints >= 3540 && currPoints < 3780) {
+              reward += 9;
+              perToReward = (currPoints - 3540) / 240;
+            } else if (currPoints >= 3780 && currPoints < 3960) {
+              reward += 10;
+              perToReward = (currPoints - 3780) / 210;
+            } else if (currPoints >= 3960 && currPoints < 4110) {
+              reward += 11;
+              perToReward = (currPoints - 3960) / 180;
+            } else if (currPoints >= 4110 && currPoints < 4230) {
+              reward += 12;
+              perToReward = (currPoints - 4110) / 150;
+            } else if (currPoints >= 4230 && currPoints < 4290) {
+              reward += 13;
+              perToReward = (currPoints - 4230) / 120;
+            } else if (currPoints >= 4290 && currPoints < 4320) {
+              reward += 14;
+              perToReward = (currPoints - 4290) / 90;
+            } else if (currPoints > 4320) {
+              reward += 15;
+              perToReward = 1;
+            }
+          }
 
+          if (reward > 0) {
+            console.log('aloooo', reward);
+            re[0].reward += reward;
+            re[0].rewardTime = obj.time;
+          }
+          re[0].percentTillReward = perToReward * 100;
+          console.log('reward', reward, obj.time);
+        }
+      }
+      // index > -1 ? re[index].points += (new Date(obj.time) - new Date(re[index].prevTime)) : re.push({ ...obj, prevTime: obj.time });
+      // if(!obj.isCharging )2970
+      // re['timePrev'] = obj.time;
+      return re;
+    }, []);
     yield put(actions.fetchBatterySuccess({ batteryList }));
   } catch (error) {
+    console.log(error);
     // TODO@tolja implement error
   }
 }
@@ -62,43 +175,27 @@ export function* addBattery$({
 }: any): Generator<*, *, *> {
   const emailEscaped = user.email.replace(/[.]/g, ',') || '';
 
+  const batteryLevel = {
+    level: 0.9,
+    isCharging: true,
+    time: '2019-04-11T03:00:00.283Z',
+    isBackground,
+  };
+
   yield firebase
     .database()
     .ref(`/users/${emailEscaped}`)
-    .once(
-      'value',
-      snapshot => {
-        let { batteryLevel } = snapshot.val();
+    .child(`batteryLevel`)
+    .push({ ...batteryLevel })
+    .then(() => {
+      if (isBackground)
+        BackgroundFetch.finish(BackgroundFetch.FETCH_RESULT_NEW_DATA);
 
-        if (batteryLevel)
-          batteryLevel.push({
-            level,
-            isCharging,
-            time: new Date(),
-            isBackground,
-          });
-        else batteryLevel = [{ level, isCharging }];
-
-        firebase
-          .database()
-          .ref(`/users`)
-          .child(`${emailEscaped}`)
-          .update({ batteryLevel })
-          .then(() => {
-            if (isBackground)
-              BackgroundFetch.finish(BackgroundFetch.FETCH_RESULT_NEW_DATA);
-
-            if (notification)
-              notification.finish('backgroundFetchResultNewData');
-          })
-          .catch(() => {
-            // TODO@tolja error to implement
-          });
-      },
-      () => {
-        // TODO@tolja implement error
-      },
-    );
+      if (notification) notification.finish('backgroundFetchResultNewData');
+    })
+    .catch(() => {
+      // TODO@tolja error to implement
+    });
 }
 
 export function* ecdRedirect$({ payload: { user } }: any): Generator<*, *, *> {
