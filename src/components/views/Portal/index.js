@@ -12,14 +12,26 @@ import {
   pushToken,
   // $FlowIssue
 } from '@actions';
-// $FlowIssue
-import { getUser, getBatteryList } from '@selectors';
+
+import {
+  getUser,
+  getBatteryList,
+  getRewardNumber,
+  getPercentTillRewarded,
+  getTimeTillRewarded,
+  getStepReward,
+  // $FlowIssue
+} from '@selectors';
 
 import Portal from './Portal';
 
 const mapStateToProps = state => ({
   ...getUser(state),
   ...getBatteryList(state),
+  ...getRewardNumber(state),
+  ...getPercentTillRewarded(state),
+  ...getTimeTillRewarded(state),
+  ...getStepReward(state),
 });
 
 const actions = {

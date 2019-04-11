@@ -28,7 +28,8 @@ export function* login$({ payload: { navigation } }: any): Generator<*, *, *> {
             if (!snapshot.val())
               firebase
                 .database()
-                .ref(`/users/${emailEscaped}`)
+                .ref(`/users`)
+                .child(`${emailEscaped}`)
                 .update({
                   email: user.email,
                   name: user.name,

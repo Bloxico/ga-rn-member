@@ -7,6 +7,10 @@ export type StateT = {
   batteryFetchInProgress: boolean,
   pushTokenInProgress: boolean,
   batteryList: [],
+  reward: number,
+  percentTillRewarded: number,
+  timeTillRewarded?: number,
+  stepReward: number,
 };
 
 const initialState: StateT = {
@@ -16,6 +20,10 @@ const initialState: StateT = {
   batteryFetchInProgress: false,
   pushTokenInProgress: false,
   batteryList: [],
+  reward: 0,
+  percentTillRewarded: 0,
+  timeTillRewarded: undefined,
+  stepReward: 0,
 };
 
 export default initialState;

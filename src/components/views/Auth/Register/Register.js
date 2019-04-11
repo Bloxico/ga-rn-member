@@ -1,8 +1,11 @@
+// @flow
 import React, { Component } from 'react';
-import { View, Text } from 'react-native';
+import { View, Image, StyleSheet } from 'react-native';
 import { GoogleSigninButton } from 'react-native-google-signin';
-
-import { Header, Card, CardSection, Spinner } from '@ui';
+// $FlowIssue
+import { Card, CardSection, Spinner, WhiteStandardText } from '@ui';
+// $FlowIssue
+import logo from '@images/energycoin.png';
 
 type Props = {
   login: Function,
@@ -24,29 +27,38 @@ class Register extends Component<Props> {
 
   render() {
     const { isLoggedInProgress } = this.props;
+    const {
+      container,
+      registerTable,
+      logoColumn,
+      logoSize,
+      logoTextColumn,
+      logoTextStyle,
+      googleColumn,
+      googleButton,
+    } = styles;
 
     if (isLoggedInProgress)
       return (
-        <View
-          style={{
-            flex: 1,
-            justifyContent: 'center',
-          }}
-        >
+        <View style={{ flex: 1 }}>
           <Spinner />
         </View>
       );
 
     return (
-      <View>
-        <Header headerText="Register" />
-        <Card>
-          <CardSection>
-            <Text>Sign in with your google account</Text>
+      <View style={container}>
+        <Card style={registerTable}>
+          <CardSection style={logoColumn}>
+            <Image style={logoSize} source={logo} />
           </CardSection>
-          <CardSection>
+          <CardSection style={logoTextColumn}>
+            <WhiteStandardText style={logoTextStyle}>
+              Green Charge
+            </WhiteStandardText>
+          </CardSection>
+          <CardSection style={googleColumn}>
             <GoogleSigninButton
-              style={{ width: 192, height: 48 }}
+              style={googleButton}
               size={GoogleSigninButton.Size.Wide}
               color={GoogleSigninButton.Color.Dark}
               onPress={this.login}
@@ -57,5 +69,16 @@ class Register extends Component<Props> {
     );
   }
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#0c0f21' },
+  registerTable: { flex: 2, alignItems: 'center' },
+  logoColumn: { flex: 1, justifyContent: 'flex-end', paddingBottom: 10 },
+  logoSize: { width: 100, height: 100 },
+  logoTextColumn: { flex: 1, justifyContent: 'flex-start' },
+  logoTextStyle: { fontSize: 30, fontWeight: 'bold' },
+  googleColumn: { flex: 1, justifyContent: 'flex-start' },
+  googleButton: { width: 192, height: 48 },
+});
 
 export default Register;

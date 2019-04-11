@@ -9,7 +9,8 @@
         "@http": "./src/services/http",
         "@state": "./src/state",
         "@actions": "./src/state/actions",
-        "@selectors": "./src/state/selectors"
+        "@selectors": "./src/state/selectors",
+        "@images": "./src/assets/images"
       },
       "extensions": [".ios.js", ".android.js", ".js", ".json"]
     }]

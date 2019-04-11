@@ -18,25 +18,25 @@ export function* fetchBattery$({ payload: { user } }: any): Generator<*, *, *> {
     const emailEscaped = user.email.replace(/[.]/g, ',') || '';
 
     let batteryList = [];
-
-    yield firebase
+    let rewards = [];
+    const batteryLevelRef = firebase
       .database()
-      .ref(`/users/${emailEscaped}/batteryLevel`)
-      .once(
-        'value',
-        snapshot => {
-          snapshot.forEach(snapshotChild => {
-            batteryList.push(snapshotChild.val());
-          });
-        },
-        () => {
-          // TODO@tolja implement error
-        },
-      );
-    batteryList.map(battery => {
-      console.log(battery);
-    });
-    const a = batteryList.reduce((re, obj) => {
+      .ref(`/users/${emailEscaped}/batteryLevel`);
+    batteryLevelRef.keepSynced(true);
+
+    yield batteryLevelRef.once(
+      'value',
+      snapshot => {
+        snapshot.forEach(snapshotChild => {
+          batteryList.push(snapshotChild.val());
+        });
+      },
+      () => {
+        // TODO@tolja implement error
+      },
+    );
+
+    const a = yield batteryList.reduce((re, obj) => {
       console.log(331, re);
       console.log(441, obj);
       if (!Array.isArray(re) || !re.length) {
@@ -44,101 +44,164 @@ export function* fetchBattery$({ payload: { user } }: any): Generator<*, *, *> {
           time: obj.time,
           points: 0,
           reward: 0,
+          stepReward: 0,
           percentTillReward: 0,
-          rewardTime: undefined,
+          rewardPreventedTime: obj.time,
           level: obj.level,
+          timeTillRewarded: 0,
         });
       } else {
         const oldDate = new Date(re[0].time);
+
         const curDate = new Date(obj.time);
+
         const utcPrev = Date.UTC(
           oldDate.getFullYear(),
           oldDate.getMonth(),
           oldDate.getDate(),
           oldDate.getHours(),
           oldDate.getMinutes(),
+          oldDate.getSeconds(),
         );
+
         const utcCurrent = Date.UTC(
           curDate.getFullYear(),
           curDate.getMonth(),
           curDate.getDate(),
           curDate.getHours(),
           curDate.getMinutes(),
+          curDate.getSeconds(),
         );
-        const points = Math.floor((utcCurrent - utcPrev) / (1000 * 60));
+
+        const points = (utcCurrent - utcPrev) / (1000 * 60);
+
         console.log('POINST', points);
         re[0].time = obj.time;
+
         re[0].points += points;
+
+        const prevLevel = re[0].level;
+
+        re[0].level = obj.level;
+        console.log('procenti', obj.level, prevLevel, obj.level > prevLevel);
+
+        let currPoints = re[0].points;
+
+        let reward = 0;
+
+        let perToReward = 0;
+
+        let timeTillRewarded = 0;
+
+        if (points > 720 || obj.level > prevLevel) currPoints -= points;
+
+        if (points < 0) currPoints += points;
+
+        if (currPoints > 0) {
+          if (currPoints < 540) {
+            perToReward = currPoints / 540;
+            timeTillRewarded = 540 - currPoints;
+          } else if (currPoints >= 540 && currPoints < 1020) {
+            ++reward;
+            perToReward = (currPoints - 540) / 480;
+            timeTillRewarded = 1020 - currPoints;
+          } else if (currPoints >= 1020 && currPoints < 1470) {
+            reward += 2;
+            perToReward = (currPoints - 1020) / 450;
+            timeTillRewarded = 1470 - currPoints;
+          } else if (currPoints >= 1470 && currPoints < 1890) {
+            reward += 3;
+            perToReward = (currPoints - 1470) / 420;
+            timeTillRewarded = 1890 - currPoints;
+          } else if (currPoints >= 1890 && currPoints < 2280) {
+            reward += 4;
+            perToReward = (currPoints - 1890) / 390;
+            timeTillRewarded = 2280 - currPoints;
+          } else if (currPoints >= 2280 && currPoints < 2640) {
+            reward += 5;
+            perToReward = (currPoints - 2280) / 360;
+            timeTillRewarded = 2640 - currPoints;
+          } else if (currPoints >= 2640 && currPoints < 2970) {
+            reward += 6;
+            perToReward = (currPoints - 2640) / 330;
+            timeTillRewarded = 2970 - currPoints;
+          } else if (currPoints >= 2970 && currPoints < 3270) {
+            reward += 7;
+            perToReward = (currPoints - 2970) / 300;
+            timeTillRewarded = 3270 - currPoints;
+          } else if (currPoints >= 3270 && currPoints < 3540) {
+            reward += 8;
+            perToReward = (currPoints - 3270) / 270;
+            timeTillRewarded = 3540 - currPoints;
+          } else if (currPoints >= 3540 && currPoints < 3780) {
+            reward += 9;
+            perToReward = (currPoints - 3540) / 240;
+            timeTillRewarded = 3780 - currPoints;
+          } else if (currPoints >= 3780 && currPoints < 3960) {
+            reward += 10;
+            perToReward = (currPoints - 3780) / 210;
+            timeTillRewarded = 3960 - currPoints;
+          } else if (currPoints >= 3960 && currPoints < 4110) {
+            reward += 11;
+            perToReward = (currPoints - 3960) / 180;
+            timeTillRewarded = 4110 - currPoints;
+          } else if (currPoints >= 4110 && currPoints < 4230) {
+            reward += 12;
+            perToReward = (currPoints - 4110) / 150;
+            timeTillRewarded = 4230 - currPoints;
+          } else if (currPoints >= 4230 && currPoints < 4290) {
+            reward += 13;
+            perToReward = (currPoints - 4230) / 120;
+            timeTillRewarded = 4290 - currPoints;
+          } else if (currPoints >= 4290 && currPoints < 4320) {
+            reward += 14;
+            perToReward = (currPoints - 4290) / 90;
+            timeTillRewarded = 4320 - currPoints;
+          } else if (currPoints > 4320) {
+            reward += 15;
+            perToReward = 1;
+          }
+        }
+        if (reward > 0) {
+          re[0].stepReward = reward;
+        }
+        re[0].percentTillReward = perToReward * 100;
+        if (timeTillRewarded === 0) timeTillRewarded = 540;
+        re[0].timeTillRewarded = timeTillRewarded;
+
         if (
           points > 720 ||
           obj.isCharging ||
-          obj.level > re[0].level ||
+          obj.level > prevLevel ||
           points < 0
         ) {
+          console.log(
+            'vece od 720',
+            points > 720,
+            'Da li se puni',
+            obj.isCharging,
+            'procenti se smanjuju',
+            obj.level > prevLevel,
+            'procenti idu u minus',
+            points < 0,
+          );
           console.log('Majku ti ');
-          let currPoints = re[0].points;
+
           re[0].points = 0;
-          let reward = 0;
-          let perToReward = 0;
-          if (points > 720 || obj.level > re[0].level || points < 0)
-            currPoints -= points;
-          if (currPoints > 0) {
-            if (currPoints < 540) {
-              perToReward = currPoints / 540;
-            } else if (currPoints >= 540 && currPoints < 1020) {
-              ++reward;
-              perToReward = (currPoints - 540) / 480;
-            } else if (currPoints >= 1020 && currPoints < 1470) {
-              reward += 2;
-              perToReward = (currPoints - 1020) / 450;
-            } else if (currPoints >= 1470 && currPoints < 1890) {
-              reward += 3;
-              perToReward = (currPoints - 1470) / 420;
-            } else if (currPoints >= 1890 && currPoints < 2280) {
-              reward += 4;
-              perToReward = (currPoints - 1890) / 390;
-            } else if (currPoints >= 2280 && currPoints < 2640) {
-              reward += 5;
-              perToReward = (currPoints - 2280) / 360;
-            } else if (currPoints >= 2640 && currPoints < 2970) {
-              reward += 6;
-              perToReward = (currPoints - 2640) / 330;
-            } else if (currPoints >= 2970 && currPoints < 3270) {
-              reward += 7;
-              perToReward = (currPoints - 2970) / 300;
-            } else if (currPoints >= 3270 && currPoints < 3540) {
-              reward += 8;
-              perToReward = (currPoints - 3270) / 270;
-            } else if (currPoints >= 3540 && currPoints < 3780) {
-              reward += 9;
-              perToReward = (currPoints - 3540) / 240;
-            } else if (currPoints >= 3780 && currPoints < 3960) {
-              reward += 10;
-              perToReward = (currPoints - 3780) / 210;
-            } else if (currPoints >= 3960 && currPoints < 4110) {
-              reward += 11;
-              perToReward = (currPoints - 3960) / 180;
-            } else if (currPoints >= 4110 && currPoints < 4230) {
-              reward += 12;
-              perToReward = (currPoints - 4110) / 150;
-            } else if (currPoints >= 4230 && currPoints < 4290) {
-              reward += 13;
-              perToReward = (currPoints - 4230) / 120;
-            } else if (currPoints >= 4290 && currPoints < 4320) {
-              reward += 14;
-              perToReward = (currPoints - 4290) / 90;
-            } else if (currPoints > 4320) {
-              reward += 15;
-              perToReward = 1;
-            }
-          }
 
           if (reward > 0) {
             console.log('aloooo', reward);
             re[0].reward += reward;
-            re[0].rewardTime = obj.time;
+
+            firebase
+              .database()
+              .ref(`/users/${emailEscaped}`)
+              .child('rewards')
+              .push({ reward, time: obj.time });
           }
-          re[0].percentTillReward = perToReward * 100;
+
+          re[0].rewardPreventedTime = obj.time;
+
           console.log('reward', reward, obj.time);
         }
       }
@@ -147,7 +210,54 @@ export function* fetchBattery$({ payload: { user } }: any): Generator<*, *, *> {
       // re['timePrev'] = obj.time;
       return re;
     }, []);
-    yield put(actions.fetchBatterySuccess({ batteryList }));
+
+    console.log(111311, a);
+    const newBatteryList = yield batteryList.filter(
+      o => new Date(o.time) >= new Date(a[0].rewardPreventedTime),
+    );
+
+    console.log(992, a, newBatteryList);
+    yield firebase
+      .database()
+      .ref(`/users/${emailEscaped}`)
+      .child('batteryLevel')
+      .set(newBatteryList);
+
+    yield firebase
+      .database()
+      .ref(`/users/${emailEscaped}`)
+      .child('rewards')
+      .once(
+        'value',
+        snapshot => {
+          snapshot.forEach(snapshotChild => {
+            rewards.push(snapshotChild.val());
+          });
+        },
+        () => {
+          // TODO@tolja implement error
+        },
+      );
+    console.log(rewards);
+    const sumRewards = rewards
+      .map(item => item.reward)
+      .reduce((prev, next) => prev + next, 0);
+
+    console.log(333112, {
+      newBatteryList,
+      sumRewards,
+      a: a[0].stepReward,
+      res: a[0].percentTillReward,
+    });
+    yield put(
+      actions.fetchBatterySuccess({
+        batteryList: newBatteryList,
+        reward: sumRewards,
+        stepReward: a[0].stepReward,
+        percentTillRewarded: a[0].percentTillReward,
+        timeTillRewarded: a[0].timeTillRewarded,
+      }),
+    );
   } catch (error) {
     console.log(error);
     // TODO@tolja implement error
@@ -176,9 +286,9 @@ export function* addBattery$({
   const emailEscaped = user.email.replace(/[.]/g, ',') || '';
 
   const batteryLevel = {
-    level: 0.9,
-    isCharging: true,
-    time: '2019-04-11T03:00:00.283Z',
+    level,
+    isCharging,
+    time: new Date(),
     isBackground,
   };
 

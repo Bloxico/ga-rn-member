@@ -1,12 +1,16 @@
+// @flow
 import React, { Component } from 'react';
-import { View, Text } from 'react-native';
-import QRCode from 'react-native-qrcode';
+import { View, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import DeviceBattery from 'react-native-device-battery';
 import BackgroundFetch from 'react-native-background-fetch';
 import PushNotification from 'react-native-push-notification';
-// import VoipPushNotification from 'react-native-voip-push-notification';
+import { AnimatedCircularProgress } from 'react-native-circular-progress';
+import SVGUri from 'react-native-svg-uri';
 
-import { Button, CardSection, Card, Header } from '@ui';
+// $FlowIssue
+import { CardSection, Card, WhiteStandardText, GrayStandardText } from '@ui';
+// $FlowIssue
+import iconMenuSVG from '@images/icon-menu.svg';
 
 type Props = {
   logout: Function,
@@ -15,15 +19,42 @@ type Props = {
   user: any,
   addBattery: Function,
   fetchBattery: Function,
-  batteryList: [],
+  reward: number,
+  percentTillRewarded: number,
   pushToken: Function,
+  timeTillRewarded: number,
+  stepReward: number,
 };
 
 class Portal extends Component<Props> {
+  static navigationOptions = ({ navigation }: any) => {
+    return {
+      title: 'Dashboard',
+      headerStyle: {
+        backgroundColor: '#0c0f21',
+      },
+      headerTintColor: '#FFF',
+      headerLeft: (
+        <TouchableOpacity
+          style={{ paddingLeft: 15 }}
+          onPress={() => navigation.openDrawer()}
+        >
+          <SVGUri style={{ width: 30, height: 15 }} source={iconMenuSVG} />
+        </TouchableOpacity>
+      ),
+    };
+  };
+
   componentWillMount() {
-    const { fetchBattery, user } = this.props;
-    fetchBattery({ user });
+    const { fetchBattery, user, addBattery } = this.props;
+    DeviceBattery.getBatteryLevel().then(level => {
+      DeviceBattery.isCharging().then(isCharging => {
+        addBattery({ level, isCharging, user });
+        fetchBattery({ user });
+      });
+    });
   }
+
   componentDidMount(): void {
     const { addBattery, user, pushToken } = this.props;
 
@@ -71,63 +102,26 @@ class Portal extends Component<Props> {
       requestPermissions: true,
     });
 
-    DeviceBattery.getBatteryLevel().then(level => {
-      DeviceBattery.isCharging().then(isCharging => {
-        addBattery({ level, isCharging, user, isBackground: false });
-      });
-    });
-
     this.s = DeviceBattery.addListener(this.onBatteryStateChanged);
+  }
 
-    // VoipPushNotification.requestPermissions(); // required
+  componentWillReceiveProps(nextProps: any, nextContext: any): void {
+    console.log('SLEDECI PROPS', nextProps, nextContext);
+    const { percentTillRewarded, timeTillRewarded } = this.props;
 
-    // VoipPushNotification.addEventListener('register', (token) => {
-    //   // send token to your apn provider server
-    //   Alert.alert(JSON.stringify(token));
-    // });
-
-    // VoipPushNotification.addEventListener('notification', notification => {
-    //   // register your VoIP client, show local notification, etc.
-    //   // e.g.
-    //   this.doRegister();
-    //
-    //   /* there is a boolean constant exported by this module called
-    //    *
-    //    * wakeupByPush
-    //    *
-    //    * you can use this constant to distinguish the app is launched
-    //    * by VoIP push notification or not
-    //    *
-    //    * e.g.
-    //    */
-    //   if (VoipPushNotification.wakeupByPush) {
-    //     // do something...
-    //     Alert.alert(JSON.stringify(notification));
-    //     // remember to set this static variable to false
-    //     // since the constant are exported only at initialization time
-    //     // and it will keep the same in the whole app
-    //     VoipPushNotification.wakeupByPush = false;
-    //   }
-    //   Alert.alert('majkle sunce ti');
-    //
-    //   /**
-    //    * Local Notification Payload
-    //    *
-    //    * - `alertBody` : The message displayed in the notification alert.
-    //    * - `alertAction` : The "action" displayed beneath an actionable notification. Defaults to "view";
-    //    * - `soundName` : The sound played when the notification is fired (optional).
-    //    * - `category`  : The category of this notification, required for actionable notifications (optional).
-    //    * - `userInfo`  : An optional object containing additional notification data.
-    //    */
-    //   VoipPushNotification.presentLocalNotification({
-    //     alertBody: "hello! " + notification.getMessage()
-    //   });
-    // });
+    if (timeTillRewarded) {
+      this.circularProgress.reAnimate(
+        percentTillRewarded,
+        100,
+        timeTillRewarded * 60000,
+      );
+    }
   }
 
   onBatteryStateChanged = state => {
-    const { addBattery, user } = this.props;
+    const { addBattery, user, fetchBattery } = this.props;
     addBattery({ level: state.level, isCharging: state.charging, user });
+    fetchBattery({ user });
   };
 
   logout = () => {
@@ -140,47 +134,83 @@ class Portal extends Component<Props> {
     ecdRedirect({ user });
   };
 
-  render() {
-    const { user, batteryList } = this.props;
+  rewardCompleted = ({ finished }: any) => {
+    const { fetchBattery, user, addBattery } = this.props;
 
+    if (finished) {
+      DeviceBattery.getBatteryLevel().then(level => {
+        DeviceBattery.isCharging().then(isCharging => {
+          addBattery({ level, isCharging, user });
+          fetchBattery({ user });
+        });
+      });
+    }
+  };
+
+  circularProgress: any;
+
+  render() {
+    const { reward, percentTillRewarded, stepReward } = this.props;
+    const { container, bigFont, percentText, percentProgress } = styles;
     return (
-      <View>
-        <Header headerText="Dashboard" />
-        <Card>
-          <CardSection>
-            <Text>Welcome </Text>
-            <Text>{user.name}</Text>
-          </CardSection>
-          <CardSection>
-            <QRCode
-              value={user.email}
-              size={200}
-              bgColor="green"
-              fgColor="#FFF"
-            />
-          </CardSection>
-          <CardSection>
-            <Button onPress={this.logout}>Sign out</Button>
-          </CardSection>
-          <CardSection>
-            <Button onPress={this.ecdRedirect}>Go to ECD</Button>
-          </CardSection>
-          {batteryList &&
-            batteryList.map(item => (
-              <CardSection key={item.time}>
-                <Text>
-                  Percent: {item.level},{' '}
-                  {(item.isCharging && 'Charging') || 'Not Charging'}, Time:{' '}
-                  {item.time && new Date(item.time).toLocaleDateString()}{' '}
-                  {item.time && new Date(item.time).toLocaleTimeString()}{' '}
-                  {(item.isBackground && 'In Background') || ''}
-                </Text>
-              </CardSection>
-            ))}
-        </Card>
+      <View style={container}>
+        <ScrollView>
+          <Card>
+            <CardSection>
+              <GrayStandardText>Total accumulated</GrayStandardText>
+            </CardSection>
+            <CardSection>
+              <WhiteStandardText style={bigFont}>
+                GOG {reward + stepReward}
+              </WhiteStandardText>
+            </CardSection>
+            <CardSection>
+              <GrayStandardText>
+                Maximum reward is 15 GOG for 72h
+              </GrayStandardText>
+            </CardSection>
+            <CardSection>
+              <WhiteStandardText>
+                Reward accumulating: {stepReward}/15
+              </WhiteStandardText>
+            </CardSection>
+            <CardSection style={percentText}>
+              <WhiteStandardText>Percent until Rewarded</WhiteStandardText>
+            </CardSection>
+            <CardSection style={percentProgress}>
+              <AnimatedCircularProgress
+                size={200}
+                width={15}
+                ref={ref => (this.circularProgress = ref)}
+                fill={percentTillRewarded}
+                prefill={percentTillRewarded}
+                tintColor="#76da7a"
+                lineCap="round"
+                backgroundColor="#3d5875"
+                onAnimationComplete={this.rewardCompleted}
+              >
+                {fill => (
+                  <WhiteStandardText>{fill.toFixed(2)}%</WhiteStandardText>
+                )}
+              </AnimatedCircularProgress>
+            </CardSection>
+          </Card>
+        </ScrollView>
       </View>
     );
   }
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#0c0f21' },
+  bigFont: { fontSize: 30 },
+  percentText: { alignItems: 'center', paddingTop: 30 },
+  percentProgress: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 30,
+  },
+});
 
 export default Portal;

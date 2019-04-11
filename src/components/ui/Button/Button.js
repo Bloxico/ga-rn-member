@@ -1,10 +1,23 @@
 // @flow
-
 import React from 'react';
-// $FlowIssue
-import { Text, TouchableOpacity } from 'react-native';
+import { Text, TouchableOpacity, StyleSheet } from 'react-native';
 
-const styles = {
+type Props = {
+  onPress: Function,
+  children: any,
+};
+
+const Button = ({ onPress, children }: Props) => {
+  const { buttonStyle, textStyle } = styles;
+
+  return (
+    <TouchableOpacity onPress={onPress} style={buttonStyle}>
+      <Text style={textStyle}>{children}</Text>
+    </TouchableOpacity>
+  );
+};
+
+const styles = StyleSheet.create({
   textStyle: {
     alignSelf: 'center',
     color: '#007aff',
@@ -23,21 +36,6 @@ const styles = {
     marginLeft: 5,
     marginRight: 5,
   },
-};
-
-type Props = {
-  onPress: Function,
-  children: any,
-};
-
-const Button = ({ onPress, children }: Props) => {
-  const { buttonStyle, textStyle } = styles;
-
-  return (
-    <TouchableOpacity onPress={onPress} style={buttonStyle}>
-      <Text style={textStyle}>{children}</Text>
-    </TouchableOpacity>
-  );
-};
+});
 
 export default Button;
