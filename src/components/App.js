@@ -1,6 +1,6 @@
 // @flow
 import React, { Component } from 'react';
-import { View, StatusBar } from 'react-native';
+import { View, StatusBar, StyleSheet } from 'react-native';
 import { Provider } from 'react-redux';
 import {
   createAppContainer,
@@ -44,7 +44,7 @@ export default class App extends Component<Props> {
   render() {
     return (
       <Provider store={store}>
-        <View style={{ flex: 1, backgroundColor: '#0c0f21' }}>
+        <View style={styles.container}>
           <StatusBar barStyle="light-content" />
           <AppContainer />
         </View>
@@ -52,3 +52,7 @@ export default class App extends Component<Props> {
     );
   }
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#0c0f21' },
+});

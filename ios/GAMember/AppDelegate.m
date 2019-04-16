@@ -29,7 +29,7 @@
   RCTRootView *rootView = [[RCTRootView alloc] initWithBridge:bridge
                                                    moduleName:@"GAMember"
                                             initialProperties:nil];
-
+[UIDevice currentDevice].batteryMonitoringEnabled = true;
   rootView.backgroundColor = [[UIColor alloc] initWithRed:1.0f green:1.0f blue:1.0f alpha:1];
   [GIDSignIn sharedInstance].clientID = @"YOUR_CLIENT_ID";
   [GIDSignIn sharedInstance].delegate = self;

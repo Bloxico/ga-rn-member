@@ -13,6 +13,7 @@ target 'GAMember' do
         'DevSupport', # Include this to enable In-App Devmenu if RN >= 0.43
         'RCTText',
         'RCTNetwork',
+        'RCTImage',
         'RCTWebSocket', # Needed for debugging
         'RCTAnimation', # Needed for FlatList and animations running on native UI thread
         # Add any other subspecs you want to use in your project
@@ -31,12 +32,14 @@ pod 'DoubleConversion', :podspec => '../node_modules/react-native/third-party-po
 
     pod 'RNGestureHandler', :path => '../node_modules/react-native-gesture-handler'
 
-  #pod 'react-native-battery', :path => '../node_modules/react-native-battery'
+  pod 'react-native-battery', :path => '../node_modules/react-native-battery'
 
-  #pod 'RNBackgroundFetch', :path => '../node_modules/react-native-background-fetch'
+  pod 'RNBackgroundFetch', :path => '../node_modules/react-native-background-fetch'
 
 
-  #pod 'RNSVG', :path => '../node_modules/react-native-svg'
+  pod 'RNSVG', :path => '../node_modules/react-native-svg'
+pod 'RNDeviceInfo', :path => '../node_modules/react-native-device-info'
+
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     if target.name == "React"

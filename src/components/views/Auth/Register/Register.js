@@ -2,6 +2,7 @@
 import React, { Component } from 'react';
 import { View, Image, StyleSheet } from 'react-native';
 import { GoogleSigninButton } from 'react-native-google-signin';
+import { SafeAreaView } from 'react-navigation';
 // $FlowIssue
 import { Card, CardSection, Spinner, WhiteStandardText } from '@ui';
 // $FlowIssue
@@ -46,7 +47,7 @@ class Register extends Component<Props> {
       );
 
     return (
-      <View style={container}>
+      <SafeAreaView style={container}>
         <Card style={registerTable}>
           <CardSection style={logoColumn}>
             <Image style={logoSize} source={logo} />
@@ -65,7 +66,7 @@ class Register extends Component<Props> {
             />
           </CardSection>
         </Card>
-      </View>
+      </SafeAreaView>
     );
   }
 }

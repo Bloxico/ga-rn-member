@@ -8,8 +8,8 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
 } from 'react-native';
-import DeviceBattery from 'react-native-device-battery';
 import SVGUri from 'react-native-svg-uri';
+import DeviceInfo from 'react-native-device-info';
 
 // $FlowIssue
 import { WhiteStandardText } from '@ui';
@@ -28,10 +28,9 @@ type Props = {
 export default class drawerContentComponents extends Component<Props> {
   logout = () => {
     const { logout, navigation, addBattery, user } = this.props;
-    DeviceBattery.getBatteryLevel().then(level => {
-      DeviceBattery.isCharging().then(isCharging => {
-        addBattery({ level, isCharging, user });
-      });
+    DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
+      const isCharging = batteryState === 'charging' || batteryState === 'full';
+      addBattery({ level: batteryLevel, isCharging, user });
     });
     logout({ navigation });
   };

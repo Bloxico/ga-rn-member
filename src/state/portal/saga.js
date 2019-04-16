@@ -13,15 +13,19 @@ import http from '@http';
 
 import * as actions from './actions';
 
-export function* fetchBattery$({ payload: { user } }: any): Generator<*, *, *> {
+export function* fetchBattery$({
+  payload: { level, isCharging, user },
+}: any): Generator<*, *, *> {
   try {
     const emailEscaped = user.email.replace(/[.]/g, ',') || '';
 
     let batteryList = [];
     let rewards = [];
+
     const batteryLevelRef = firebase
       .database()
       .ref(`/users/${emailEscaped}/batteryLevel`);
+
     batteryLevelRef.keepSynced(true);
 
     yield batteryLevelRef.once(
@@ -35,10 +39,10 @@ export function* fetchBattery$({ payload: { user } }: any): Generator<*, *, *> {
         // TODO@tolja implement error
       },
     );
-
+    const latestEvent = { level, isCharging, time: new Date().toJSON() };
+    yield batteryList.push(latestEvent);
+    console.log(1,batteryList);
     const a = yield batteryList.reduce((re, obj) => {
-      console.log(331, re);
-      console.log(441, obj);
       if (!Array.isArray(re) || !re.length) {
         re.push({
           time: obj.time,
@@ -48,7 +52,7 @@ export function* fetchBattery$({ payload: { user } }: any): Generator<*, *, *> {
           percentTillReward: 0,
           rewardPreventedTime: obj.time,
           level: obj.level,
-          timeTillRewarded: 0,
+          timeTillRewarded: 540,
         });
       } else {
         const oldDate = new Date(re[0].time);
@@ -75,28 +79,19 @@ export function* fetchBattery$({ payload: { user } }: any): Generator<*, *, *> {
 
         const points = (utcCurrent - utcPrev) / (1000 * 60);
 
-        console.log('POINST', points);
         re[0].time = obj.time;
-
         re[0].points += points;
-
         const prevLevel = re[0].level;
-
         re[0].level = obj.level;
-        console.log('procenti', obj.level, prevLevel, obj.level > prevLevel);
-
         let currPoints = re[0].points;
 
         let reward = 0;
-
         let perToReward = 0;
-
-        let timeTillRewarded = 0;
+        let timeTillRewarded = 540;
 
         if (points > 720 || obj.level > prevLevel) currPoints -= points;
-
         if (points < 0) currPoints += points;
-
+        // TODO@tolja put this in for loop and constants, so it's more readable
         if (currPoints > 0) {
           if (currPoints < 540) {
             perToReward = currPoints / 540;
@@ -162,11 +157,12 @@ export function* fetchBattery$({ payload: { user } }: any): Generator<*, *, *> {
             perToReward = 1;
           }
         }
+
         if (reward > 0) {
           re[0].stepReward = reward;
         }
+
         re[0].percentTillReward = perToReward * 100;
-        if (timeTillRewarded === 0) timeTillRewarded = 540;
         re[0].timeTillRewarded = timeTillRewarded;
 
         if (
@@ -175,22 +171,11 @@ export function* fetchBattery$({ payload: { user } }: any): Generator<*, *, *> {
           obj.level > prevLevel ||
           points < 0
         ) {
-          console.log(
-            'vece od 720',
-            points > 720,
-            'Da li se puni',
-            obj.isCharging,
-            'procenti se smanjuju',
-            obj.level > prevLevel,
-            'procenti idu u minus',
-            points < 0,
-          );
-          console.log('Majku ti ');
-
           re[0].points = 0;
+          re[0].percentTillReward = 0;
+          re[0].timeTillRewarded = 540;
 
           if (reward > 0) {
-            console.log('aloooo', reward);
             re[0].reward += reward;
 
             firebase
@@ -201,22 +186,15 @@ export function* fetchBattery$({ payload: { user } }: any): Generator<*, *, *> {
           }
 
           re[0].rewardPreventedTime = obj.time;
-
-          console.log('reward', reward, obj.time);
         }
       }
-      // index > -1 ? re[index].points += (new Date(obj.time) - new Date(re[index].prevTime)) : re.push({ ...obj, prevTime: obj.time });
-      // if(!obj.isCharging )2970
-      // re['timePrev'] = obj.time;
+      if (batteryList.length < 2) re[0].timeTillRewarded = 540;
       return re;
     }, []);
 
-    console.log(111311, a);
     const newBatteryList = yield batteryList.filter(
       o => new Date(o.time) >= new Date(a[0].rewardPreventedTime),
     );
-
-    console.log(992, a, newBatteryList);
     yield firebase
       .database()
       .ref(`/users/${emailEscaped}`)
@@ -238,17 +216,11 @@ export function* fetchBattery$({ payload: { user } }: any): Generator<*, *, *> {
           // TODO@tolja implement error
         },
       );
-    console.log(rewards);
+
     const sumRewards = rewards
       .map(item => item.reward)
       .reduce((prev, next) => prev + next, 0);
-
-    console.log(333112, {
-      newBatteryList,
-      sumRewards,
-      a: a[0].stepReward,
-      res: a[0].percentTillReward,
-    });
+    console.log(55, newBatteryList, sumRewards, a[0].stepReward, a[0].percentTillReward, a[0].timeTillRewarded);
     yield put(
       actions.fetchBatterySuccess({
         batteryList: newBatteryList,
@@ -391,5 +363,4 @@ export default function*() {
   yield all([takeEvery(actions.BATTERY, addBattery$)]);
   yield all([takeEvery(actions.BATTERY_FETCH, fetchBattery$)]);
   yield all([takeEvery(actions.PUSH_TOKEN, pushToken$)]);
-  // yield fork(startListener);
 }
