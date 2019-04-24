@@ -18,8 +18,14 @@ import SVGUri from 'react-native-svg-uri';
 import Modal from 'react-native-modal';
 import DeviceInfo from 'react-native-device-info';
 
-// $FlowIssue
-import { CardSection, Card, WhiteStandardText, GrayStandardText } from '@ui';
+import {
+  CardSection,
+  Card,
+  WhiteStandardText,
+  GrayStandardText,
+  LineChart,
+  // $FlowIssue
+} from '@ui';
 // $FlowIssue
 import iconMenuSVG from '@images/icon-menu.svg';
 // $FlowIssue
@@ -41,6 +47,7 @@ type Props = {
 
 type State = {
   showHelp: boolean,
+  animationCompleted: boolean,
 };
 
 class Portal extends Component<Props, State> {
@@ -65,11 +72,12 @@ class Portal extends Component<Props, State> {
 
   state = {
     showHelp: false,
+    animationCompleted: false,
   };
 
   componentWillMount() {
     const { fetchBattery, user } = this.props;
-
+    console.log(user);
     DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
       const isCharging = batteryState === 'charging' || batteryState === 'full';
       fetchBattery({ level: batteryLevel, isCharging, user });
@@ -115,9 +123,9 @@ class Portal extends Component<Props, State> {
         });
       },
       permissions: {
-        alert: false,
-        badge: false,
-        sound: false,
+        alert: true,
+        badge: true,
+        sound: true,
       },
       popInitialNotification: false,
       requestPermissions: true,
@@ -139,13 +147,17 @@ class Portal extends Component<Props, State> {
 
   componentWillReceiveProps(nextProps: any): void {
     const { percentTillRewarded, timeTillRewarded } = nextProps;
-    console.log('ALOOO move me', timeTillRewarded, percentTillRewarded)
-      console.log('TOOOO');
+    const { animationCompleted } = this.state;
+    console.log('ALOOO move me', timeTillRewarded, percentTillRewarded);
+    console.log('TOOOO');
+    if (!animationCompleted) {
+      this.setState({ animationCompleted: true });
       this.circularProgress.reAnimate(
         percentTillRewarded,
         100,
         timeTillRewarded * 60000,
       );
+    }
   }
 
   componentWillUnmount() {
@@ -182,8 +194,8 @@ class Portal extends Component<Props, State> {
 
   rewardCompleted = ({ finished }: any) => {
     const { fetchBattery, user } = this.props;
-
     if (finished) {
+      this.setState({ animationCompleted: false });
       DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
         const isCharging =
           batteryState === 'charging' || batteryState === 'full';
@@ -200,7 +212,7 @@ class Portal extends Component<Props, State> {
   circularProgress: any;
 
   render() {
-    const { reward, percentTillRewarded, stepReward } = this.props;
+    const { reward, stepReward } = this.props;
     const { showHelp } = this.state;
     const {
       container,
@@ -281,8 +293,7 @@ class Portal extends Component<Props, State> {
                 size={200}
                 width={15}
                 ref={ref => (this.circularProgress = ref)}
-                fill={percentTillRewarded}
-                prefill={percentTillRewarded}
+                fill={0}
                 tintColor="#76da7a"
                 lineCap="round"
                 backgroundColor="#3d5875"
@@ -292,6 +303,18 @@ class Portal extends Component<Props, State> {
                   <WhiteStandardText>{fill.toFixed(2)}%</WhiteStandardText>
                 )}
               </AnimatedCircularProgress>
+            </CardSection>
+            <CardSection>
+              <LineChart
+                data={[
+                  { x: 0, y: 0 },
+                  { x: 1, y: 2 },
+                  { x: 2, y: 1 },
+                  { x: 3, y: 4 },
+                  { x: 4, y: 3 },
+                  { x: 5, y: 5 },
+                ]}
+              />
             </CardSection>
           </Card>
         </ScrollView>
