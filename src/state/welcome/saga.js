@@ -116,7 +116,6 @@ export function* isLogged$({
         );
 
         // console.log(333, firebaseUser);
-
       }
       yield navigation.navigate('Dashboard');
     }

@@ -151,6 +151,7 @@ class Portal extends Component<Props, State> {
     console.log('ALOOO move me', timeTillRewarded, percentTillRewarded);
     console.log('TOOOO');
     if (!animationCompleted) {
+      // TODO@tolja add also prevLevel and current and isCharging
       this.setState({ animationCompleted: true });
       this.circularProgress.reAnimate(
         percentTillRewarded,

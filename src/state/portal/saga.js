@@ -94,7 +94,8 @@ export function* fetchBattery$({
         let perToReward = 0;
         let timeTillRewarded = rewardSteps[0] * 60;
 
-        if (points > 720 || obj.currentPercentage > prevLevel) currPoints -= points;
+        if (points > 720 || obj.currentPercentage > prevLevel)
+          currPoints -= points;
         if (points < 0) currPoints += points;
 
         rewardSteps.reduce((pointsSum, currPeriod, index) => {
@@ -126,7 +127,7 @@ export function* fetchBattery$({
 
         if (
           points > 720 ||
-          obj.isCharging ||
+          obj.chargingStatus ||
           obj.currentPercentage > prevLevel ||
           points < 0
         ) {
@@ -212,15 +213,12 @@ export function* fetchBattery$({
   }
 }
 
-export function* pushToken$({
-  payload: { token, user },
-}: any): Generator<*, *, *> {
+export function* pushToken$({ payload: { token } }: any): Generator<*, *, *> {
   try {
     yield firebase
       .database()
-      .ref(`/users/${user.uid}`)
-      .child(`info`)
-      .update({ pushToken: token.token });
+      .ref(`/pushKeys`)
+      .push({ pushToken: token.token });
   } catch (error) {
     // TODO@tolja implement error
   }
