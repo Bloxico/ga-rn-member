@@ -1,6 +1,6 @@
 // @flow
 
-import { all, takeEvery, put } from 'redux-saga/effects';
+import { all, takeEvery, takeLatest, put, call } from 'redux-saga/effects';
 import firebase from 'react-native-firebase';
 import base64 from 'react-native-base64';
 import { Linking } from 'react-native';
@@ -12,8 +12,166 @@ import http from '@http';
 
 import * as actions from './actions';
 
+function* moze$(batteryList, claim, user) {
+  const a = yield batteryList.reduce((re, obj, index) => {
+    const rewardSteps = [
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+      0.01,
+    ];
+
+    if (!Array.isArray(re) || !re.length) {
+      re.push({
+        time: obj.timestamp,
+        points: 0,
+        reward: 0,
+        stepReward: 0,
+        toClaimReward: 0,
+        percentTillReward: 0,
+        rewardPreventedTime: obj.timestamp,
+        level: obj.currentPercentage,
+        timeTillRewarded: rewardSteps[0] * 60,
+      });
+    } else {
+      const oldDate = new Date(re[0].time);
+
+      const curDate = new Date(obj.timestamp);
+
+      const utcPrev = Date.UTC(
+        oldDate.getFullYear(),
+        oldDate.getMonth(),
+        oldDate.getDate(),
+        oldDate.getHours(),
+        oldDate.getMinutes(),
+        oldDate.getSeconds(),
+      );
+
+      const utcCurrent = Date.UTC(
+        curDate.getFullYear(),
+        curDate.getMonth(),
+        curDate.getDate(),
+        curDate.getHours(),
+        curDate.getMinutes(),
+        curDate.getSeconds(),
+      );
+
+      const points = (utcCurrent - utcPrev) / (1000 * 60);
+
+      re[0].time = obj.timestamp;
+      re[0].points += points;
+      const prevLevel = re[0].level;
+      re[0].level = obj.currentPercentage;
+      let currPoints = re[0].points;
+
+      let reward = 0;
+      let perToReward = 0;
+      let timeTillRewarded = rewardSteps[0] * 60;
+
+      if (points > 720 || obj.currentPercentage > prevLevel)
+        currPoints -= points;
+      if (points < 0) currPoints += points;
+
+      rewardSteps.reduce((pointsSum, currPeriod, index) => {
+        let prevSum = pointsSum;
+        let currPeriodMinutes = currPeriod * 60;
+        pointsSum += currPeriodMinutes;
+        if (pointsSum > currPoints && currPoints >= prevSum && reward === 0) {
+          reward = index;
+          perToReward = (currPoints - prevSum) / (pointsSum - prevSum);
+          timeTillRewarded = pointsSum - currPoints;
+        } else if (index === rewardSteps.length - 1 && currPoints > pointsSum) {
+          reward = rewardSteps.length;
+          timeTillRewarded = 0;
+        }
+
+        return pointsSum;
+      }, 0);
+      if (reward > 0) {
+        re[0].stepReward = reward;
+        re[0].reward = reward;
+      }
+
+      re[0].percentTillReward = perToReward * 100;
+      re[0].timeTillRewarded = timeTillRewarded;
+
+      if (
+        points > 720 ||
+        obj.chargingStatus ||
+        obj.currentPercentage > prevLevel ||
+        points < 0 ||
+        (claim && index === batteryList.length - 1)
+      ) {
+        re[0].points = 0;
+        re[0].percentTillReward = 0;
+        re[0].timeTillRewarded = rewardSteps[0] * 60;
+
+        if (reward > 0) {
+          re[0].reward += reward;
+        }
+
+        if (claim && index === batteryList.length - 1 && re[0].reward > 0) {
+          firebase
+            .database()
+            .ref(`/users/${user.uid}/devices/${user.id}/current_reward`)
+            .set({
+              reward: re[0].reward,
+              timestamp: new Date(obj.timestamp).getTime(),
+              email: user.email,
+            });
+          re[0].rewardPreventedTime = obj.timestamp;
+          re[0].reward = 0;
+        }
+
+        re[0].rewardPreventedTime = obj.timestamp;
+      }
+    }
+    if (batteryList.length < 2) re[0].timeTillRewarded = rewardSteps[0] * 60;
+    return re;
+  }, []);
+  return a;
+}
+
+export function* fetchRewards({ payload: { user } }): Generator<*, *, *> {
+  try {
+    const rewards = [];
+
+    yield firebase
+      .database()
+      .ref(`/users/${user.uid}/devices/${user.id}`)
+      .child('rewards')
+      .once(
+        'value',
+        snapshot => {
+          snapshot.forEach(snapshotChild => {
+            rewards.push(snapshotChild.val());
+          });
+        },
+        () => {
+          // TODO@tolja implement error
+        },
+      );
+
+    const rewardsAccumulated = rewards
+      .map(item => item.reward)
+      .reduce((prev, next) => prev + next, 0);
+
+    yield put(actions.fetchRewardsSuccess({ rewardsAccumulated }));
+  } catch (error) {
+    //TODO@tolja implement error
+  }
+}
+
 export function* fetchBattery$({
-  payload: { level, isCharging, user },
+  payload: { level, isCharging, user, claim },
 }: any): Generator<*, *, *> {
   try {
     let batteryList = [];
@@ -21,7 +179,7 @@ export function* fetchBattery$({
 
     const batteryLevelRef = firebase
       .database()
-      .ref(`/users/${user.uid}/events`);
+      .ref(`/users/${user.uid}/devices/${user.id}/events`);
 
     batteryLevelRef.keepSynced(true);
 
@@ -36,144 +194,35 @@ export function* fetchBattery$({
         // TODO@tolja implement error
       },
     );
-
+    const time =
+      new Date().setSeconds(new Date().getSeconds() + 10) || new Date();
     const latestEvent = {
       currentPercentage: level,
       chargingStatus: isCharging,
-      timestamp: new Date().toJSON(),
+      timestamp: new Date(time).toJSON(),
     };
 
     batteryList.push(latestEvent);
 
-    const a = yield batteryList.reduce((re, obj) => {
-      const rewardSteps = [6, 5, 5, 4, 4, 4, 3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1];
-
-      if (!Array.isArray(re) || !re.length) {
-        re.push({
-          time: obj.timestamp,
-          points: 0,
-          reward: 0,
-          stepReward: 0,
-          percentTillReward: 0,
-          rewardPreventedTime: obj.timestamp,
-          level: obj.currentPercentage,
-          timeTillRewarded: rewardSteps[0] * 60,
-        });
-      } else {
-        const oldDate = new Date(re[0].time);
-
-        const curDate = new Date(obj.timestamp);
-
-        const utcPrev = Date.UTC(
-          oldDate.getFullYear(),
-          oldDate.getMonth(),
-          oldDate.getDate(),
-          oldDate.getHours(),
-          oldDate.getMinutes(),
-          oldDate.getSeconds(),
-        );
-
-        const utcCurrent = Date.UTC(
-          curDate.getFullYear(),
-          curDate.getMonth(),
-          curDate.getDate(),
-          curDate.getHours(),
-          curDate.getMinutes(),
-          curDate.getSeconds(),
-        );
-
-        const points = (utcCurrent - utcPrev) / (1000 * 60);
-
-        re[0].time = obj.timestamp;
-        re[0].points += points;
-        const prevLevel = re[0].level;
-        re[0].level = obj.currentPercentage;
-        let currPoints = re[0].points;
-
-        let reward = 0;
-        let perToReward = 0;
-        let timeTillRewarded = rewardSteps[0] * 60;
-
-        if (points > 720 || obj.currentPercentage > prevLevel)
-          currPoints -= points;
-        if (points < 0) currPoints += points;
-
-        rewardSteps.reduce((pointsSum, currPeriod, index) => {
-          let prevSum = pointsSum;
-          let currPeriodMinutes = currPeriod * 60;
-          pointsSum += currPeriodMinutes;
-
-          if (pointsSum > currPoints && currPoints > prevSum && reward === 0) {
-            reward = index;
-            perToReward = (currPoints - prevSum) / (pointsSum - prevSum);
-            timeTillRewarded = pointsSum - currPoints;
-          } else if (
-            index === rewardSteps.length - 1 &&
-            currPoints > pointsSum
-          ) {
-            reward = rewardSteps.length;
-            timeTillRewarded = 0;
-          }
-
-          return pointsSum;
-        }, 0);
-
-        if (reward > 0) {
-          re[0].stepReward = reward;
-        }
-
-        re[0].percentTillReward = perToReward * 100;
-        re[0].timeTillRewarded = timeTillRewarded;
-
-        if (
-          points > 720 ||
-          obj.chargingStatus ||
-          obj.currentPercentage > prevLevel ||
-          points < 0
-        ) {
-          re[0].points = 0;
-          re[0].percentTillReward = 0;
-          re[0].timeTillRewarded = rewardSteps[0] * 60;
-
-          if (reward > 0) {
-            re[0].reward += reward;
-
-            firebase
-              .database()
-              .ref(`/rewards`)
-              .push({
-                stopOrder: reward,
-                reward,
-                timestamp: obj.timestamp,
-                uid: user.uid,
-                deviceId: user.id,
-                email: user.email,
-                totalOrder: rewardSteps.length,
-                storedInECD: false,
-              });
-          }
-
-          re[0].rewardPreventedTime = obj.timestamp;
-        }
-      }
-      if (batteryList.length < 2) re[0].timeTillRewarded = rewardSteps[0] * 60;
-      return re;
-    }, []);
-
-    const newBatteryList = yield batteryList.filter(
-      o => new Date(o.timestamp) >= new Date(a[0].rewardPreventedTime),
-    );
+    const aaa = yield call(moze$, batteryList, claim, user);
+    console.log('EOOO GAAAAA', aaa);
+    const newBatteryList = claim
+      ? batteryList.filter(
+          o => new Date(o.timestamp) >= new Date(aaa[0].rewardPreventedTime),
+        )
+      : batteryList;
+    console.log(48191, user);
 
     yield firebase
       .database()
-      .ref(`/users`)
-      .child(user.uid)
+      .ref(`/users/${user.uid}/devices/${user.id}`)
       .child('events')
       .set(newBatteryList);
+    console.log('newList', newBatteryList);
 
     yield firebase
       .database()
-      .ref(`/users/${user.uid}`)
+      .ref(`/users/${user.uid}/devices/${user.id}`)
       .child('rewards')
       .once(
         'value',
@@ -186,25 +235,26 @@ export function* fetchBattery$({
           // TODO@tolja implement error
         },
       );
-
+    console.log('rewards', rewards);
     const sumRewards = rewards
       .map(item => item.reward)
       .reduce((prev, next) => prev + next, 0);
     console.log(
       55,
-      newBatteryList,
       sumRewards,
-      a[0].stepReward,
-      a[0].percentTillReward,
-      a[0].timeTillRewarded,
+      aaa[0].stepReward,
+      aaa[0].percentTillReward,
+      aaa[0].timeTillRewarded,
     );
     yield put(
       actions.fetchBatterySuccess({
         batteryList: newBatteryList,
         reward: sumRewards,
-        stepReward: a[0].stepReward,
-        percentTillRewarded: a[0].percentTillReward,
-        timeTillRewarded: a[0].timeTillRewarded,
+        toClaimReward: aaa[0].reward,
+        stepReward: aaa[0].stepReward,
+        percentTillRewarded: aaa[0].percentTillReward,
+        timeTillRewarded: aaa[0].timeTillRewarded,
+        randomNumber: Math.random(),
       }),
     );
   } catch (error) {
@@ -232,10 +282,10 @@ export function* addBattery$({
     chargingStatus: isCharging,
     timestamp: new Date(),
   };
-
+  console.log(user);
   yield firebase
     .database()
-    .ref(`/users/${user.uid}`)
+    .ref(`/users/${user.uid}/devices/${user.id}`)
     .child(`events`)
     .push({ ...batteryLevel })
     .then(() => {

@@ -5,7 +5,6 @@ import {
   View,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   NativeEventEmitter,
   NativeModules,
 } from 'react-native';
@@ -18,18 +17,13 @@ import SVGUri from 'react-native-svg-uri';
 import Modal from 'react-native-modal';
 import DeviceInfo from 'react-native-device-info';
 
-import {
-  CardSection,
-  Card,
-  WhiteStandardText,
-  GrayStandardText,
-  LineChart,
-  // $FlowIssue
-} from '@ui';
+// $FlowIssue
+import { CardSection, Card, WhiteStandardText, GrayStandardText } from '@ui';
 // $FlowIssue
 import iconMenuSVG from '@images/icon-menu.svg';
 // $FlowIssue
 import iconHelpSVG from '@images/icon-help.svg';
+import { Button } from '../../ui';
 
 type Props = {
   logout: Function,
@@ -80,7 +74,7 @@ class Portal extends Component<Props, State> {
     console.log(user);
     DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
       const isCharging = batteryState === 'charging' || batteryState === 'full';
-      fetchBattery({ level: batteryLevel, isCharging, user });
+      fetchBattery({ level: batteryLevel, isCharging, user, claim: false });
     });
   }
 
@@ -123,9 +117,9 @@ class Portal extends Component<Props, State> {
         });
       },
       permissions: {
-        alert: true,
-        badge: true,
-        sound: true,
+        alert: false,
+        badge: false,
+        sound: false,
       },
       popInitialNotification: false,
       requestPermissions: true,
@@ -150,6 +144,7 @@ class Portal extends Component<Props, State> {
     const { animationCompleted } = this.state;
     console.log('ALOOO move me', timeTillRewarded, percentTillRewarded);
     console.log('TOOOO');
+    console.log('AnimationCompleted: ', animationCompleted);
     if (!animationCompleted) {
       // TODO@tolja add also prevLevel and current and isCharging
       this.setState({ animationCompleted: true });
@@ -159,6 +154,10 @@ class Portal extends Component<Props, State> {
         timeTillRewarded * 60000,
       );
     }
+  }
+
+  componentDidUpdate(prevProps: any): void {
+    console.log('bozeMOJ', prevProps, this.props);
   }
 
   componentWillUnmount() {
@@ -172,14 +171,14 @@ class Portal extends Component<Props, State> {
   onBatteryStateChanged = ({ batteryState, batteryLevel }: any) => {
     const { user, fetchBattery } = this.props;
     const isCharging = batteryState === 'charging' || batteryState === 'full';
-    fetchBattery({ level: batteryLevel, isCharging, user });
+    fetchBattery({ level: batteryLevel, isCharging, user, claim: false });
   };
 
   onBatteryLevelChanged = (level: number) => {
     const { user, fetchBattery } = this.props;
     DeviceInfo.getPowerState().then(({ batteryState }) => {
       const isCharging = batteryState === 'charging' || batteryState === 'full';
-      fetchBattery({ level, isCharging, user });
+      fetchBattery({ level, isCharging, user, claim: false });
     });
   };
 
@@ -193,14 +192,16 @@ class Portal extends Component<Props, State> {
     ecdRedirect({ user });
   };
 
-  rewardCompleted = ({ finished }: any) => {
-    const { fetchBattery, user } = this.props;
+  rewardCompleted = ({ finished, claim = false }: any) => {
+    const { addBattery, fetchBattery, user } = this.props;
+    console.log('REWARD CLAIM', claim);
     if (finished) {
       this.setState({ animationCompleted: false });
       DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
         const isCharging =
           batteryState === 'charging' || batteryState === 'full';
-        fetchBattery({ level: batteryLevel, isCharging, user });
+        addBattery({ level: batteryLevel, isCharging, user });
+        fetchBattery({ level: batteryLevel, isCharging, user, claim });
       });
     }
   };
@@ -210,10 +211,15 @@ class Portal extends Component<Props, State> {
     this.setState({ showHelp: !showHelp });
   };
 
+  rewardClaim = () => {
+    // this.circularProgress.stopAnimation();
+    this.rewardCompleted({ finished: true, claim: true });
+  };
+
   circularProgress: any;
 
   render() {
-    const { reward, stepReward } = this.props;
+    const { reward, stepReward, toClaimReward } = this.props;
     const { showHelp } = this.state;
     const {
       container,
@@ -271,7 +277,7 @@ class Portal extends Component<Props, State> {
 
             <CardSection style={separateText}>
               <WhiteStandardText style={bigFont}>
-                GOG {reward + stepReward}
+                GOG {reward}
               </WhiteStandardText>
             </CardSection>
 
@@ -306,16 +312,9 @@ class Portal extends Component<Props, State> {
               </AnimatedCircularProgress>
             </CardSection>
             <CardSection>
-              <LineChart
-                data={[
-                  { x: 0, y: 0 },
-                  { x: 1, y: 2 },
-                  { x: 2, y: 1 },
-                  { x: 3, y: 4 },
-                  { x: 4, y: 3 },
-                  { x: 5, y: 5 },
-                ]}
-              />
+              <Button disabled={toClaimReward === 0} onPress={this.rewardClaim}>
+                Collect {toClaimReward} GOG
+              </Button>
             </CardSection>
           </Card>
         </ScrollView>

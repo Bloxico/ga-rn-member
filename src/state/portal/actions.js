@@ -31,3 +31,11 @@ export const PUSH_TOKEN_FAIL = `${PUSH_TOKEN} fail`;
 export const pushToken = createAction(PUSH_TOKEN);
 export const pushTokenSuccess = createAction(PUSH_TOKEN_SUCCESS);
 export const pushTokenFail = createAction(PUSH_TOKEN_FAIL);
+
+export const FETCH_REWARDS = '[FETCH_REWARDS]';
+export const FETCH_REWARDS_SUCCESS = `${FETCH_REWARDS} success`;
+export const FETCH_REWARDS_FAIL = `${FETCH_REWARDS} fail`;
+
+export const fetchRewards = createAction(FETCH_REWARDS);
+export const fetchRewardsSuccess = createAction(FETCH_REWARDS_SUCCESS);
+export const fetchRewardsFail = createAction(FETCH_REWARDS_FAIL);

@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node node_modules/react-native/local-cli/cli.js start",
+    "start": "node node_modules/react-native/local-cli/cli.js start --reset-cache",
     "ios": "react-native run-ios",
     "android": "react-native run-android",
     "bundle:android": "cd android && ./gradlew assembleRelease",
@@ -20,8 +20,8 @@
     }
   },
   "dependencies": {
-    "react": "16.8.3",
-    "react-native": "0.59.1",
+    "react": "16.8.6",
+    "react-native": "0.59.8",
     "react-native-axios": "^0.17.1",
     "react-native-background-fetch": "^2.5.1",
     "react-native-base64": "^0.0.2",

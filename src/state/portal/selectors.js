@@ -19,3 +19,11 @@ export const getTimeTillRewarded = ({ portal: { timeTillRewarded } }) => ({
 export const getStepReward = ({ portal: { stepReward } }) => ({
   stepReward,
 });
+
+export const getRandomNumber = ({ portal: { randomNumber } }) => ({
+  randomNumber,
+});
+
+export const getToClaimReward = ({ portal: { toClaimReward } }) => ({
+  toClaimReward,
+});

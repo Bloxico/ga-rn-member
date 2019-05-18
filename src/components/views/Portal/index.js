@@ -20,6 +20,8 @@ import {
   getPercentTillRewarded,
   getTimeTillRewarded,
   getStepReward,
+  getRandomNumber,
+  getToClaimReward,
   // $FlowIssue
 } from '@selectors';
 
@@ -32,6 +34,8 @@ const mapStateToProps = state => ({
   ...getPercentTillRewarded(state),
   ...getTimeTillRewarded(state),
   ...getStepReward(state),
+  ...getRandomNumber(state),
+  ...getToClaimReward(state),
 });
 
 const actions = {
