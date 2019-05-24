@@ -5,9 +5,10 @@ import {
   View,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   NativeEventEmitter,
   NativeModules,
+  Easing,
+  AppState,
 } from 'react-native';
 import { SafeAreaView } from 'react-navigation';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
@@ -23,7 +24,7 @@ import {
   Card,
   WhiteStandardText,
   GrayStandardText,
-  LineChart,
+  Button,
   // $FlowIssue
 } from '@ui';
 // $FlowIssue
@@ -43,11 +44,17 @@ type Props = {
   pushToken: Function,
   timeTillRewarded: number,
   stepReward: number,
+  claimButton: boolean,
+  claimRewards: Function,
+  toClaimReward: number,
 };
 
 type State = {
   showHelp: boolean,
   animationCompleted: boolean,
+  claimReward: number,
+  isCharging: boolean,
+  appState: any,
 };
 
 class Portal extends Component<Props, State> {
@@ -73,6 +80,9 @@ class Portal extends Component<Props, State> {
   state = {
     showHelp: false,
     animationCompleted: false,
+    claimReward: 0,
+    isCharging: false,
+    appState: AppState.currentState,
   };
 
   componentWillMount() {
@@ -81,6 +91,7 @@ class Portal extends Component<Props, State> {
     DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
       const isCharging = batteryState === 'charging' || batteryState === 'full';
       fetchBattery({ level: batteryLevel, isCharging, user });
+      this.setState({ isCharging });
     });
   }
 
@@ -143,21 +154,30 @@ class Portal extends Component<Props, State> {
       'batteryLevelDidChange',
       this.onBatteryLevelChanged,
     );
+    AppState.addEventListener('change', this.handleAppStateChange);
   }
 
   componentWillReceiveProps(nextProps: any): void {
-    const { percentTillRewarded, timeTillRewarded } = nextProps;
-    const { animationCompleted } = this.state;
+    const {
+      percentTillRewarded,
+      timeTillRewarded,
+      toClaimReward,
+      stepReward,
+    } = nextProps;
+    const { animationCompleted, isCharging } = this.state;
+    if (toClaimReward > 0) this.setState({ claimReward: toClaimReward });
+    // else this.setState({ claimReward: stepReward });
     console.log('ALOOO move me', timeTillRewarded, percentTillRewarded);
     console.log('TOOOO');
     if (!animationCompleted) {
       // TODO@tolja add also prevLevel and current and isCharging
       this.setState({ animationCompleted: true });
-      this.circularProgress.reAnimate(
-        percentTillRewarded,
-        100,
-        timeTillRewarded * 60000,
-      );
+      if (!isCharging)
+        this.circularProgress.reAnimate(
+          percentTillRewarded,
+          100,
+          timeTillRewarded * 60000,
+        );
     }
   }
 
@@ -167,12 +187,37 @@ class Portal extends Component<Props, State> {
       const isCharging = batteryState === 'charging' || batteryState === 'full';
       addBattery({ level: batteryLevel, isCharging, user });
     });
+    AppState.removeEventListener('change', this.handleAppStateChange);
   }
+
+  handleAppStateChange = (nextAppState: string) => {
+    const { fetchBattery, user } = this.props;
+    const { appState } = this.state;
+    if (appState.match(/inactive|background/) && nextAppState === 'active') {
+      DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
+        const isCharging =
+          batteryState === 'charging' || batteryState === 'full';
+        fetchBattery({ level: batteryLevel, isCharging, user });
+        this.setState({ isCharging });
+      });
+    }
+    this.setState({ appState: nextAppState });
+  };
 
   onBatteryStateChanged = ({ batteryState, batteryLevel }: any) => {
     const { user, fetchBattery } = this.props;
     const isCharging = batteryState === 'charging' || batteryState === 'full';
-    fetchBattery({ level: batteryLevel, isCharging, user });
+    console.log(
+      'batteryState, isCharging',
+      batteryState,
+      this.state.isCharging,
+    );
+    fetchBattery({
+      level: batteryLevel,
+      isCharging: isCharging || this.state.isCharging,
+      user,
+    });
+    this.setState({ isCharging });
   };
 
   onBatteryLevelChanged = (level: number) => {
@@ -180,6 +225,7 @@ class Portal extends Component<Props, State> {
     DeviceInfo.getPowerState().then(({ batteryState }) => {
       const isCharging = batteryState === 'charging' || batteryState === 'full';
       fetchBattery({ level, isCharging, user });
+      this.setState({ isCharging });
     });
   };
 
@@ -210,11 +256,19 @@ class Portal extends Component<Props, State> {
     this.setState({ showHelp: !showHelp });
   };
 
+  rewardClaim = () => {
+    const { claimRewards, user, stepReward } = this.props;
+    const { claimReward } = this.state;
+
+    claimRewards({ currentLevel: stepReward, user, reward: claimReward });
+    this.setState({ claimReward: 0 });
+  };
+
   circularProgress: any;
 
   render() {
-    const { reward, stepReward } = this.props;
-    const { showHelp } = this.state;
+    const { reward, stepReward, toClaimReward } = this.props;
+    const { showHelp, claimReward, isCharging } = this.state;
     const {
       container,
       bigFont,
@@ -271,7 +325,7 @@ class Portal extends Component<Props, State> {
 
             <CardSection style={separateText}>
               <WhiteStandardText style={bigFont}>
-                GOG {reward + stepReward}
+                GOG {reward}
               </WhiteStandardText>
             </CardSection>
 
@@ -290,32 +344,45 @@ class Portal extends Component<Props, State> {
             </CardSection>
 
             <CardSection style={percentProgress}>
-              <AnimatedCircularProgress
-                size={200}
-                width={15}
-                ref={ref => (this.circularProgress = ref)}
-                fill={0}
-                tintColor="#76da7a"
-                lineCap="round"
-                backgroundColor="#3d5875"
-                onAnimationComplete={this.rewardCompleted}
-              >
-                {fill => (
-                  <WhiteStandardText>{fill.toFixed(2)}%</WhiteStandardText>
-                )}
-              </AnimatedCircularProgress>
+              {isCharging || stepReward === 3 ? (
+                <AnimatedCircularProgress
+                  size={200}
+                  width={15}
+                  fill={100}
+                  tintColor="#fb9e1b"
+                  backgroundColor="#000000"
+                >
+                  {() => (
+                    <WhiteStandardText>
+                      {isCharging
+                        ? 'Unplug your charger!'
+                        : 'Charge your phone again'}
+                    </WhiteStandardText>
+                  )}
+                </AnimatedCircularProgress>
+              ) : (
+                <AnimatedCircularProgress
+                  size={200}
+                  width={15}
+                  ref={ref => (this.circularProgress = ref)}
+                  fill={0}
+                  tintColor="#76da7a"
+                  lineCap="square"
+                  rotation={0}
+                  backgroundColor="#3d5875"
+                  easing={Easing.quad}
+                  onAnimationComplete={this.rewardCompleted}
+                >
+                  {fill => (
+                    <WhiteStandardText>{fill.toFixed(2)}%</WhiteStandardText>
+                  )}
+                </AnimatedCircularProgress>
+              )}
             </CardSection>
             <CardSection>
-              <LineChart
-                data={[
-                  { x: 0, y: 0 },
-                  { x: 1, y: 2 },
-                  { x: 2, y: 1 },
-                  { x: 3, y: 4 },
-                  { x: 4, y: 3 },
-                  { x: 5, y: 5 },
-                ]}
-              />
+              <Button disabled={claimReward === 0} onPress={this.rewardClaim}>
+                Collect {claimReward} GOG
+              </Button>
             </CardSection>
           </Card>
         </ScrollView>
