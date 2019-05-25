@@ -95,6 +95,21 @@ export default handleActions(
         pushTokenInProgress: false,
       }),
     ],
+    [
+      actions.CLAIM_REWARDS,
+      state => ({
+        ...state,
+        claimRewardInProgress: true,
+      }),
+    ],
+    [
+      actions.CLAIM_REWARDS_SUCCESS,
+      (state, { payload }) => ({
+        ...state,
+        ...payload,
+        claimRewardInProgress: false,
+      }),
+    ],
   ]),
   { ...initialState },
 );

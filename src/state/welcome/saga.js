@@ -9,18 +9,20 @@ import * as actions from '@actions';
 
 export function* login$({ payload: { navigation } }: any): Generator<*, *, *> {
   try {
-    const data = yield call([GoogleSignin, GoogleSignin.signIn]);
-    console.log(data);
+    const { user, idToken, accessToken } = yield call([
+      GoogleSignin,
+      GoogleSignin.signIn,
+    ]);
+
     const credential = yield firebase.auth.GoogleAuthProvider.credential(
-      data.idToken,
-      data.accessToken,
+      idToken,
+      accessToken,
     );
     // login with credential
     const firebaseUserCredential = yield firebase
       .auth()
       .signInWithCredential(credential);
-    console.log(firebaseUserCredential);
-    const { user } = data;
+
     if (user && firebaseUserCredential) {
       yield put(
         actions.loginSuccess({
@@ -30,8 +32,6 @@ export function* login$({ payload: { navigation } }: any): Generator<*, *, *> {
 
       yield navigation.navigate('Dashboard');
 
-      const emailEscaped = user.email.replace(/[.]/g, ',');
-
       yield firebase
         .database()
         .ref(`/users`)
@@ -40,8 +40,6 @@ export function* login$({ payload: { navigation } }: any): Generator<*, *, *> {
         .once(
           'value',
           snapshot => {
-            console.log(81729, snapshot.val());
-            // console.log(snapshot.val());
             if (!snapshot.val())
               firebase
                 .database()
@@ -62,23 +60,7 @@ export function* login$({ payload: { navigation } }: any): Generator<*, *, *> {
     yield put(actions.loginFail());
   }
 }
-// function getFirebaseUser(firebaseUser) {
-//   console.log('ALOOOOOOOO', firebaseUser);
-//   return new Promise(resolve => {
-//     const credential = firebase.auth.GoogleAuthProvider.credential(
-//       firebaseUser.idToken,
-//       firebaseUser.accessToken,
-//     );
-//     resolve(credential);
-//   })
-//     .then(credential => {
-//       const firebaseUserCredential = firebase
-//         .auth()
-//         .signInWithCredential(credential);
-//     })
-//     .then(firebaseUser => firebaseUser);
-//   // login with credential
-// }
+
 export function* isLogged$({
   payload: { navigation },
 }: any): Generator<*, *, *> {
@@ -94,28 +76,30 @@ export function* isLogged$({
 
       if (userInfo) {
         const { user } = userInfo;
-        console.log(45552, user);
+
         yield put(actions.isLoggedSuccess({ user }));
       } else {
-        const a = yield GoogleSignin.signInSilently();
+        const {
+          user,
+          idToken,
+          accessToken,
+        } = yield GoogleSignin.signInSilently();
+
         const credential = yield firebase.auth.GoogleAuthProvider.credential(
-          a.idToken,
-          a.accessToken,
+          idToken,
+          accessToken,
         );
+
         // login with credential
         const firebaseUserCredential = yield firebase
           .auth()
           .signInWithCredential(credential);
-        const { user } = a;
-        // console.log(55555, b);
-        console.log(firebaseUserCredential);
+
         yield put(
           actions.isLoggedSuccess({
             user: { ...user, uid: firebaseUserCredential.user.uid },
           }),
         );
-
-        // console.log(333, firebaseUser);
       }
       yield navigation.navigate('Dashboard');
     }

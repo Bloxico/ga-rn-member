@@ -19,17 +19,15 @@ import SVGUri from 'react-native-svg-uri';
 import Modal from 'react-native-modal';
 import DeviceInfo from 'react-native-device-info';
 
+import { REWARD_SUPPLY } from '@constants';
 import {
   CardSection,
   Card,
   WhiteStandardText,
   GrayStandardText,
   Button,
-  // $FlowIssue
 } from '@ui';
-// $FlowIssue
 import iconMenuSVG from '@images/icon-menu.svg';
-// $FlowIssue
 import iconHelpSVG from '@images/icon-help.svg';
 
 type Props = {
@@ -44,7 +42,6 @@ type Props = {
   pushToken: Function,
   timeTillRewarded: number,
   stepReward: number,
-  claimButton: boolean,
   claimRewards: Function,
   toClaimReward: number,
 };
@@ -87,10 +84,12 @@ class Portal extends Component<Props, State> {
 
   componentWillMount() {
     const { fetchBattery, user } = this.props;
-    console.log(user);
+
     DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
       const isCharging = batteryState === 'charging' || batteryState === 'full';
+
       fetchBattery({ level: batteryLevel, isCharging, user });
+
       this.setState({ isCharging });
     });
   }
@@ -108,6 +107,7 @@ class Portal extends Component<Props, State> {
         DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
           const isCharging =
             batteryState === 'charging' || batteryState === 'full';
+
           addBattery({ level: batteryLevel, isCharging, user });
         });
       },
@@ -142,36 +142,32 @@ class Portal extends Component<Props, State> {
       requestPermissions: true,
     });
 
-    // DeviceBattery.addListener(this.onBatteryStateChanged);
     const deviceInfoEmitter = new NativeEventEmitter(
       NativeModules.RNDeviceInfo,
     );
+
     deviceInfoEmitter.addListener(
       'powerStateDidChange',
       this.onBatteryStateChanged,
     );
+
     deviceInfoEmitter.addListener(
       'batteryLevelDidChange',
       this.onBatteryLevelChanged,
     );
+
     AppState.addEventListener('change', this.handleAppStateChange);
   }
 
   componentWillReceiveProps(nextProps: any): void {
-    const {
-      percentTillRewarded,
-      timeTillRewarded,
-      toClaimReward,
-      stepReward,
-    } = nextProps;
+    const { percentTillRewarded, timeTillRewarded, toClaimReward } = nextProps;
     const { animationCompleted, isCharging } = this.state;
+
     if (toClaimReward > 0) this.setState({ claimReward: toClaimReward });
-    // else this.setState({ claimReward: stepReward });
-    console.log('ALOOO move me', timeTillRewarded, percentTillRewarded);
-    console.log('TOOOO');
+
     if (!animationCompleted) {
-      // TODO@tolja add also prevLevel and current and isCharging
       this.setState({ animationCompleted: true });
+
       if (!isCharging)
         this.circularProgress.reAnimate(
           percentTillRewarded,
@@ -183,48 +179,57 @@ class Portal extends Component<Props, State> {
 
   componentWillUnmount() {
     const { addBattery, user } = this.props;
+
     DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
       const isCharging = batteryState === 'charging' || batteryState === 'full';
+
       addBattery({ level: batteryLevel, isCharging, user });
     });
+
     AppState.removeEventListener('change', this.handleAppStateChange);
   }
 
   handleAppStateChange = (nextAppState: string) => {
     const { fetchBattery, user } = this.props;
     const { appState } = this.state;
+
     if (appState.match(/inactive|background/) && nextAppState === 'active') {
       DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
         const isCharging =
           batteryState === 'charging' || batteryState === 'full';
+
         fetchBattery({ level: batteryLevel, isCharging, user });
+
         this.setState({ isCharging });
       });
     }
+
     this.setState({ appState: nextAppState });
   };
 
   onBatteryStateChanged = ({ batteryState, batteryLevel }: any) => {
     const { user, fetchBattery } = this.props;
-    const isCharging = batteryState === 'charging' || batteryState === 'full';
-    console.log(
-      'batteryState, isCharging',
-      batteryState,
-      this.state.isCharging,
-    );
+    const { isCharging } = this.state;
+    const isChargingState =
+      batteryState === 'charging' || batteryState === 'full';
+
     fetchBattery({
       level: batteryLevel,
-      isCharging: isCharging || this.state.isCharging,
+      isCharging: isChargingState || isCharging,
       user,
     });
-    this.setState({ isCharging });
+
+    this.setState({ isCharging: isChargingState });
   };
 
   onBatteryLevelChanged = (level: number) => {
     const { user, fetchBattery } = this.props;
+
     DeviceInfo.getPowerState().then(({ batteryState }) => {
       const isCharging = batteryState === 'charging' || batteryState === 'full';
+
       fetchBattery({ level, isCharging, user });
+
       this.setState({ isCharging });
     });
   };
@@ -241,11 +246,14 @@ class Portal extends Component<Props, State> {
 
   rewardCompleted = ({ finished }: any) => {
     const { fetchBattery, user } = this.props;
+
     if (finished) {
       this.setState({ animationCompleted: false });
+
       DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
         const isCharging =
           batteryState === 'charging' || batteryState === 'full';
+
         fetchBattery({ level: batteryLevel, isCharging, user });
       });
     }
@@ -257,17 +265,23 @@ class Portal extends Component<Props, State> {
   };
 
   rewardClaim = () => {
-    const { claimRewards, user, stepReward } = this.props;
+    const { claimRewards, user, stepReward, reward } = this.props;
     const { claimReward } = this.state;
 
-    claimRewards({ currentLevel: stepReward, user, reward: claimReward });
+    claimRewards({
+      currentLevel: stepReward,
+      user,
+      reward: claimReward,
+      sumReward: reward,
+    });
+
     this.setState({ claimReward: 0 });
   };
 
   circularProgress: any;
 
   render() {
-    const { reward, stepReward, toClaimReward } = this.props;
+    const { reward, stepReward } = this.props;
     const { showHelp, claimReward, isCharging } = this.state;
     const {
       container,
@@ -340,11 +354,11 @@ class Portal extends Component<Props, State> {
             </CardSection>
 
             <CardSection style={percentText}>
-              <WhiteStandardText>Percent until Rewarded</WhiteStandardText>
+              <WhiteStandardText>Percent until Rewardedaaa</WhiteStandardText>
             </CardSection>
 
             <CardSection style={percentProgress}>
-              {isCharging || stepReward === 3 ? (
+              {isCharging || stepReward === 15 ? (
                 <AnimatedCircularProgress
                   size={200}
                   width={15}
@@ -381,7 +395,9 @@ class Portal extends Component<Props, State> {
             </CardSection>
             <CardSection>
               <Button disabled={claimReward === 0} onPress={this.rewardClaim}>
-                Collect {claimReward} GOG
+                {claimReward !== 0
+                  ? `Collect ${claimReward} GOG`
+                  : `Next reward is ${1 + REWARD_SUPPLY[stepReward]} GOG`}
               </Button>
             </CardSection>
           </Card>

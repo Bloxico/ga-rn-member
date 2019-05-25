@@ -11,6 +11,7 @@ export type StateT = {
   percentTillRewarded: number,
   timeTillRewarded?: number,
   stepReward: number,
+  claimRewardInProgress: boolean,
 };
 
 const initialState: StateT = {
@@ -24,6 +25,7 @@ const initialState: StateT = {
   percentTillRewarded: 0,
   timeTillRewarded: undefined,
   stepReward: 0,
+  claimRewardInProgress: false,
 };
 
 export default initialState;

@@ -1,12 +1,19 @@
 // @flow
 
-import { all, takeEvery, put } from 'redux-saga/effects';
+import { all, takeEvery, takeLatest, put } from 'redux-saga/effects';
 import firebase from 'react-native-firebase';
 import base64 from 'react-native-base64';
 import { Linking } from 'react-native';
 import BackgroundFetch from 'react-native-background-fetch';
-// $FlowIssue
-import { CLIENT_ID, CLIENT_PASS, ECD_LINK } from '@constants';
+
+import {
+  CLIENT_ID,
+  CLIENT_PASS,
+  ECD_LINK,
+  REWARD_STEPS,
+  REWARD_SUM,
+  // $FlowIssue
+} from '@constants';
 // $FlowIssue
 import http from '@http';
 
@@ -20,7 +27,6 @@ export function* fetchBattery$({
     let sumRewards = 0;
     let currentReward = 0;
     let lastClaim;
-    let disableClaim = false;
 
     const batteryLevelRef = firebase
       .database()
@@ -59,23 +65,6 @@ export function* fetchBattery$({
     batteryList.push(latestEvent);
 
     const a = yield batteryList.reduce((re, obj) => {
-      const rewardSteps = [
-        0.01,
-        0.01,
-        0.01,
-        0.01,
-        0.01,
-        0.01,
-        0.01,
-        0.01,
-        0.01,
-        0.01,
-        0.01,
-        0.01,
-        0.01,
-        0.01,
-        0.01,
-      ];
       if (!Array.isArray(re) || !re.length) {
         re.push({
           time: obj.timestamp,
@@ -86,7 +75,7 @@ export function* fetchBattery$({
           percentTillReward: 0,
           rewardPreventedTime: obj.timestamp,
           level: obj.currentPercentage,
-          timeTillRewarded: rewardSteps[0] * 60,
+          timeTillRewarded: REWARD_STEPS[0] * 60,
         });
       } else {
         const oldDate = new Date(re[0].time);
@@ -124,8 +113,9 @@ export function* fetchBattery$({
         re[0].isCharging = obj.chargingStatus;
 
         let reward = 0;
+        let stepReward = 0;
         let perToReward = 0;
-        let timeTillRewarded = rewardSteps[0] * 60;
+        let timeTillRewarded = REWARD_STEPS[0] * 60;
 
         if (
           points > 720 ||
@@ -135,20 +125,23 @@ export function* fetchBattery$({
           currPoints -= points;
         if (points < 0) currPoints += points;
 
-        rewardSteps.reduce((pointsSum, currPeriod, index) => {
+        REWARD_STEPS.reduce((pointsSum, currPeriod, index) => {
           let prevSum = pointsSum;
           let currPeriodMinutes = currPeriod * 60;
           pointsSum = parseFloat((pointsSum + currPeriodMinutes).toFixed(2));
 
           if (pointsSum >= currPoints && currPoints > prevSum && reward === 0) {
-            reward = index;
+            // TODO@tolja optimizovati petlju i reduce
+            reward = REWARD_SUM[index];
+            stepReward = index;
             perToReward = (currPoints - prevSum) / (pointsSum - prevSum);
             timeTillRewarded = pointsSum - currPoints;
           } else if (
-            index === rewardSteps.length - 1 &&
+            index === REWARD_STEPS.length - 1 &&
             currPoints > pointsSum
           ) {
-            reward = rewardSteps.length;
+            reward = REWARD_SUM[REWARD_STEPS.length];
+            stepReward = REWARD_STEPS.length;
             timeTillRewarded = 0;
           }
 
@@ -156,7 +149,7 @@ export function* fetchBattery$({
         }, 0);
 
         if (reward > 0) {
-          re[0].stepReward = reward;
+          re[0].stepReward = stepReward;
         }
 
         re[0].percentTillReward = perToReward * 100;
@@ -170,11 +163,10 @@ export function* fetchBattery$({
         ) {
           re[0].points = 0;
           re[0].percentTillReward = 0;
-          re[0].timeTillRewarded = rewardSteps[0] * 60;
+          re[0].timeTillRewarded = REWARD_STEPS[0] * 60;
 
           if (reward > 0) {
             re[0].reward += reward;
-
             firebase
               .database()
               .ref(`/users/${user.uid}/devices/${user.id}`)
@@ -201,11 +193,6 @@ export function* fetchBattery$({
                         email: user.email,
                       });
                   }
-                  // firebase
-                  //   .database()
-                  //   .ref(`/users/${user.uid}/devices/${user.id}/claim_ios`)
-                  //   .child('timestamps')
-                  //   .push({ time: batteryList[0].timestamp });
                 },
                 () => {
                   // TODO@tolja implement error
@@ -221,7 +208,7 @@ export function* fetchBattery$({
             .push({ time: batteryList[0].timestamp });
         }
       }
-      if (batteryList.length < 2) re[0].timeTillRewarded = rewardSteps[0] * 60;
+      if (batteryList.length < 2) re[0].timeTillRewarded = REWARD_STEPS[0] * 60;
       return re;
     }, []);
 
@@ -249,12 +236,14 @@ export function* fetchBattery$({
 
     if (lastClaim && new Date(lastClaim.time) >= new Date(timestamp)) {
       if (a[0].stepReward === 0) {
-        currentReward -= lastClaim.currentLevel;
+        currentReward -= REWARD_SUM[lastClaim.currentLevel];
       } else
         currentReward =
-          currentReward + a[0].stepReward - lastClaim.currentLevel;
+          currentReward +
+          REWARD_SUM[a[0].stepReward] -
+          REWARD_SUM[lastClaim.currentLevel];
     } else {
-      currentReward += a[0].stepReward;
+      currentReward += REWARD_SUM[a[0].stepReward];
     }
 
     const stepReward = newBatteryList[newBatteryList.length - 1].chargingStatus
@@ -272,63 +261,37 @@ export function* fetchBattery$({
       }),
     );
   } catch (error) {
-    console.log(error);
     // TODO@tolja implement error
   }
 }
 
 export function* claimReward$({
-  payload: { reward, currentLevel, user },
+  payload: { reward, currentLevel, user, sumReward },
 }: any): Generator<*, *, *> {
   try {
-    // let toReward = currentLevel >= reward ? reward : currentLevel;
-
     yield firebase
       .database()
       .ref(`/users/${user.uid}/devices/${user.id}`)
       .child('current_reward')
-      .once(
-        'value',
-        snapshot => {
-          if (snapshot.val()) {
-            // const currentReward = snapshot.val().reward + toReward;
+      .set({
+        reward: reward,
+        timestamp: new Date().getTime(),
+        email: user.email,
+        claimable: true,
+      });
 
-            firebase
-              .database()
-              .ref(`/users/${user.uid}/devices/${user.id}`)
-              .child('current_reward')
-              .update({ reward, claimable: true })
-              .then(() => {
-                firebase
-                  .database()
-                  .ref(`/users/${user.uid}/devices/${user.id}`)
-                  .child('claim_ios')
-                  .set({ currentLevel, time: new Date() });
-              });
-          } else {
-            firebase
-              .database()
-              .ref(`/users/${user.uid}/devices/${user.id}`)
-              .child('current_reward')
-              .set({
-                reward: reward,
-                timestamp: new Date().getTime(),
-                email: user.email,
-                claimable: true,
-              })
-              .then(() => {
-                firebase
-                  .database()
-                  .ref(`/users/${user.uid}/devices/${user.id}`)
-                  .child('claim_ios')
-                  .set({ currentLevel, time: new Date() });
-              });
-          }
-        },
-        () => {
-          // TODO@tolja implement error
-        },
-      );
+    yield firebase
+      .database()
+      .ref(`/users/${user.uid}/devices/${user.id}`)
+      .child('claim_ios')
+      .set({ currentLevel, time: new Date(), reward });
+
+    yield put(
+      actions.claimRewardsSuccess({
+        reward: sumReward + reward,
+        toClaimReward: 0,
+      }),
+    );
   } catch (error) {
     // TODO@tolja implement error
   }
@@ -471,7 +434,7 @@ export function* ecdRedirect$({ payload: { user } }: any): Generator<*, *, *> {
 export default function*() {
   yield all([takeEvery(actions.ECD_REDIRECT, ecdRedirect$)]);
   yield all([takeEvery(actions.BATTERY, addBattery$)]);
-  yield all([takeEvery(actions.BATTERY_FETCH, fetchBattery$)]);
+  yield all([takeLatest(actions.BATTERY_FETCH, fetchBattery$)]);
   yield all([takeEvery(actions.PUSH_TOKEN, pushToken$)]);
   yield all([takeEvery(actions.CLAIM_REWARDS, claimReward$)]);
 }
