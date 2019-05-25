@@ -3,6 +3,12 @@ package com.gamember;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import com.learnium.RNDeviceInfo.RNDeviceInfo;
+import com.horcrux.svg.SvgPackage;
+import com.dieam.reactnativepushnotification.ReactNativePushNotificationPackage;
+import com.transistorsoft.rnbackgroundfetch.RNBackgroundFetchPackage;
+import com.rctbattery.BatteryManagerPackage;
+import com.robinpowered.react.battery.DeviceBatteryPackage;
 import com.swmansion.gesturehandler.react.RNGestureHandlerPackage;
 import io.invertase.firebase.RNFirebasePackage;
 import io.invertase.firebase.database.RNFirebaseDatabasePackage;
@@ -28,6 +34,12 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new RNDeviceInfo(),
+            new SvgPackage(),
+            new ReactNativePushNotificationPackage(),
+            new RNBackgroundFetchPackage(),
+            new BatteryManagerPackage(),
+            new DeviceBatteryPackage(),
             new RNGestureHandlerPackage(),
             new RNFirebasePackage(),
             new RNGoogleSigninPackage(),

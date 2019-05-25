@@ -9,30 +9,46 @@ import * as actions from '@actions';
 
 export function* login$({ payload: { navigation } }: any): Generator<*, *, *> {
   try {
-    const { user } = yield call([GoogleSignin, GoogleSignin.signIn]);
+    const { user, idToken, accessToken } = yield call([
+      GoogleSignin,
+      GoogleSignin.signIn,
+    ]);
 
-    if (user) {
-      yield put(actions.loginSuccess({ user }));
+    const credential = yield firebase.auth.GoogleAuthProvider.credential(
+      idToken,
+      accessToken,
+    );
+    // login with credential
+    const firebaseUserCredential = yield firebase
+      .auth()
+      .signInWithCredential(credential);
+
+    if (user && firebaseUserCredential) {
+      yield put(
+        actions.loginSuccess({
+          user: { ...user, uid: firebaseUserCredential.user.uid },
+        }),
+      );
 
       yield navigation.navigate('Dashboard');
 
-      const emailEscaped = user.email.replace(/[.]/g, ',');
-
       yield firebase
         .database()
-        .ref(`/users/${emailEscaped}`)
+        .ref(`/users`)
+        .child(firebaseUserCredential.user.uid)
+        .child('info')
         .once(
           'value',
           snapshot => {
             if (!snapshot.val())
               firebase
                 .database()
-                .ref('/users')
-                .set({
-                  [`${emailEscaped}`]: {
-                    email: user.email,
-                    name: user.name,
-                  },
+                .ref(`/users`)
+                .child(firebaseUserCredential.user.uid)
+                .child('info')
+                .update({
+                  email: user.email,
+                  name: user.name,
                 });
           },
           () => {
@@ -63,9 +79,27 @@ export function* isLogged$({
 
         yield put(actions.isLoggedSuccess({ user }));
       } else {
-        const { user } = yield GoogleSignin.signInSilently();
+        const {
+          user,
+          idToken,
+          accessToken,
+        } = yield GoogleSignin.signInSilently();
 
-        yield put(actions.isLoggedSuccess({ user }));
+        const credential = yield firebase.auth.GoogleAuthProvider.credential(
+          idToken,
+          accessToken,
+        );
+
+        // login with credential
+        const firebaseUserCredential = yield firebase
+          .auth()
+          .signInWithCredential(credential);
+
+        yield put(
+          actions.isLoggedSuccess({
+            user: { ...user, uid: firebaseUserCredential.user.uid },
+          }),
+        );
       }
       yield navigation.navigate('Dashboard');
     }

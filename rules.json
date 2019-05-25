@@ -1,0 +1,31 @@
+{
+  /* Visit https://firebase.google.com/docs/database/security to learn more about security rules. */
+  "rules": {
+    "users": {
+      "$uid": {
+        "info": {
+          ".read": "$uid === auth.uid",
+          ".write": "$uid === auth.uid"
+        },
+        "rewards": {
+          ".read": "$uid === auth.uid",
+          ".write": false //TODO@sekula see if driver can enter data here
+        },
+        "events": {
+          ".read": "$uid === auth.uid",
+          ".write": "$uid === auth.uid"
+        }
+      }
+    },
+    "rewards": {
+      ".read": false,
+      ".write": "newData.hasChildren([ 'uid', 'deviceId', 'stopOrder', 'reward', 'email', 'storedInECD', 'totalOrder', 'timestamp' ])",
+      "uid": {
+        ".validate": "newData.val() === auth.uid"
+      },
+      "storedInECD": {
+        ".validate": "newData.val() === false"
+      }
+    },
+  }
+}

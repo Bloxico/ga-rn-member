@@ -40,6 +40,7 @@ module.name_mapper='^@actions\/\(.*\)$' -> '<PROJECT_ROOT>/src/state/actions/\1'
 module.name_mapper='^@ui\/\(.*\)$' -> '<PROJECT_ROOT>/src/components/ui/\1'
 module.name_mapper='^@constants\/\(.*\)$' -> '<PROJECT_ROOT>/src/constants/\1'
 module.name_mapper='^@http\/\(.*\)$' -> '<PROJECT_ROOT>/src/state/actions/\1'
+module.name_mapper='^@images\/\(.*\)$' -> '<PROJECT_ROOT>/src/state/images/\1'
 esproposal.optional_chaining=enable
 esproposal.nullish_coalescing=enable
 
