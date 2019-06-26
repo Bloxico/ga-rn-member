@@ -1,6 +1,6 @@
 // @flow
 import React, { Component } from 'react';
-import { StyleSheet, Easing, View, PixelRatio } from 'react-native';
+import { Easing, View, PixelRatio } from 'react-native';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import CountDown from 'react-native-countdown-component';
 // $FlowIssue
@@ -150,10 +150,3 @@ export default class AnimatedChunks extends Component<Props, State> {
     );
   }
 }
-
-const styles = StyleSheet.create({
-  myAppText: {
-    fontSize: 12,
-    color: '#A9BEC7',
-  },
-});

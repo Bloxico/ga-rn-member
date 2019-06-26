@@ -10,6 +10,7 @@ type Props = {
   buttonStyle?: any,
   titleStyle?: any,
   type?: InputStatuses,
+  style?: InputStatuses,
 };
 
 const GAButton = (props: Props) => {
@@ -21,7 +22,7 @@ const GAButton = (props: Props) => {
     secondaryTitle,
     grayButton,
   } = styles;
-  const { icon, buttonStyle, titleStyle, type, style } = props;
+  const { icon, titleStyle, type, style } = props;
 
   return (
     <Button

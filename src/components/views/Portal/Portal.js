@@ -66,10 +66,8 @@ type State = {
   sumRewards: number,
   collectInProgress: boolean,
 };
-const pixelRatio = PixelRatio.get();
 const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
 const rem = (deviceWidth / 375 + deviceHeight / 813) / 2;
-// const rem2 = deviceHeight / 813;
 
 class Portal extends Component<Props, State> {
   static navigationOptions = ({ navigation }: any) => {
@@ -130,12 +128,6 @@ class Portal extends Component<Props, State> {
 
   componentDidMount(): void {
     const { addBattery, user, pushToken } = this.props;
-    console.log(
-      'PIXEL_RATIO, WIDTH, HEIGHT,',
-      pixelRatio,
-      deviceWidth,
-      deviceHeight,
-    );
 
     BackgroundFetch.configure(
       {
@@ -289,6 +281,7 @@ class Portal extends Component<Props, State> {
     updateClaim: boolean = true,
   ) => {
     const { addBattery, fetchBattery } = this.props;
+    const { isCharging: isChargingCurrent } = this.state;
 
     DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
       const isCharging = batteryState === 'charging' || batteryState === 'full';
@@ -296,7 +289,7 @@ class Portal extends Component<Props, State> {
       if (fetch)
         fetchBattery({ level: batteryLevel, isCharging, user, updateClaim });
       else addBattery({ level: batteryLevel, isCharging, user });
-      if (isCharging !== this.state.isCharging) this.setState({ isCharging });
+      if (isCharging !== isChargingCurrent) this.setState({ isCharging });
     });
   };
 

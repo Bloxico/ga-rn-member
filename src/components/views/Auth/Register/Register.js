@@ -6,8 +6,6 @@ import SVGUri from 'react-native-svg-uri';
 // $FlowIssue
 import { Card, CardSection, Spinner, WhiteStandardText, Button } from '@ui';
 // $FlowIssue
-import logo from '@images/Logo.svg';
-// $FlowIssue
 import google from '@images/Google.svg';
 
 type Props = {

@@ -409,8 +409,7 @@ export function* ecdRedirect$({ payload: { user } }: any): Generator<*, *, *> {
               .then(() => {
                 Linking.openURL(`${ECD_LINK}auth?token=${token.accessToken}`);
               })
-              .catch(error => {
-                console.log(error.response);
+              .catch(() => {
                 http
                   .post(
                     'oauth/token',
@@ -443,14 +442,12 @@ export function* ecdRedirect$({ payload: { user } }: any): Generator<*, *, *> {
                         refreshToken: data.refresh_token,
                       });
                   })
-                  .catch(error => {
-                    console.log(error.response);
+                  .catch(() => {
                     // TODO@tolja implement error
                   });
               });
         },
-        error => {
-          console.log(error);
+        () => {
           // TODO@tolja implement error
         },
       );
@@ -464,7 +461,6 @@ export function* ecdRedirect$({ payload: { user } }: any): Generator<*, *, *> {
 
     yield put(actions.ecdRedirectSuccess({ userIntegrated: true }));
   } catch (error) {
-    console.log(error);
     yield put(actions.ecdRedirectFail());
   }
 }
@@ -494,10 +490,8 @@ export function* isIntegrated$({
     if (deviceConnected && deviceConnected.email === email) {
       userIntegrated = deviceConnected.connected;
     }
-    console.log(deviceConnected);
     yield put(actions.ecdConnectedSuccess({ userIntegrated }));
   } catch (error) {
-    console.log(error);
     // TODO@tolja implement error
   }
 }
