@@ -42,7 +42,7 @@ class Http {
     this.config = Object.assign({}, DEFAULT_CONFIG, opts);
 
     this.http = axios.create({
-      baseURL: '/',
+      baseURL: 'http://18.184.156.139:8089/api',
       timeout: this.config.timeout,
       headers: { 'Cache-Control': 'no-cache' },
     });

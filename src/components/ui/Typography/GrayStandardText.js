@@ -19,7 +19,7 @@ export default class GrayStandardText extends Component<Props> {
 
 const styles = StyleSheet.create({
   myAppText: {
-    fontSize: 16,
-    color: '#6B718C',
+    fontSize: 12,
+    color: '#A9BEC7',
   },
 });

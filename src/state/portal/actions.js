@@ -39,3 +39,11 @@ export const CLAIM_REWARDS_FAIL = `${CLAIM_REWARDS} fail`;
 export const claimRewards = createAction(CLAIM_REWARDS);
 export const claimRewardsSuccess = createAction(CLAIM_REWARDS_SUCCESS);
 export const claimRewardsFail = createAction(CLAIM_REWARDS_FAIL);
+
+export const ECD_CONNECTED = '[ECD_CONNECTED]';
+export const ECD_CONNECTED_SUCCESS = `${ECD_CONNECTED} success`;
+export const ECD_CONNECTED_FAIL = `${ECD_CONNECTED} fail`;
+
+export const ecdConnected = createAction(ECD_CONNECTED);
+export const ecdConnectedSuccess = createAction(ECD_CONNECTED_SUCCESS);
+export const ecdConnectedFail = createAction(ECD_CONNECTED_FAIL);

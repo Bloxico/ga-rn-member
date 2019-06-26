@@ -11,6 +11,7 @@ import {
   fetchBattery,
   pushToken,
   claimRewards,
+  ecdConnected,
   // $FlowIssue
 } from '@actions';
 
@@ -23,6 +24,8 @@ import {
   getStepReward,
   isClaimButton,
   getRewardToClaim,
+  isBatteryFetching,
+  isUserIntegrated,
   // $FlowIssue
 } from '@selectors';
 
@@ -37,6 +40,8 @@ const mapStateToProps = state => ({
   ...getStepReward(state),
   ...isClaimButton(state),
   ...getRewardToClaim(state),
+  ...isBatteryFetching(state),
+  ...isUserIntegrated(state),
 });
 
 const actions = {
@@ -47,6 +52,7 @@ const actions = {
   fetchBattery,
   pushToken,
   claimRewards,
+  ecdConnected,
 };
 
 export default compose(

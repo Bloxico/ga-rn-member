@@ -1,5 +1,4 @@
 {
-  /* Visit https://firebase.google.com/docs/database/security to learn more about security rules. */
   "rules": {
     "users": {
       "$uid": {
@@ -7,25 +6,36 @@
           ".read": "$uid === auth.uid",
           ".write": "$uid === auth.uid"
         },
-        "rewards": {
-          ".read": "$uid === auth.uid",
-          ".write": false //TODO@sekula see if driver can enter data here
-        },
-        "events": {
-          ".read": "$uid === auth.uid",
-          ".write": "$uid === auth.uid"
+        "devices": {
+          "$deviceId": {
+            ".read": "$uid === auth.uid",
+            "events": {
+              ".read": "$uid === auth.uid",
+              ".write": "$uid === auth.uid"
+            },
+            "current_reward": {
+              ".read": "$uid === auth.uid",
+              ".write": "$uid === auth.uid"
+            },
+            "sum_rewards": {
+              ".read": "$uid === auth.uid",
+              ".write": false
+            },
+            "claim_ios": {
+              ".read": "$uid === auth.uid",
+              ".write": "$uid === auth.uid"
+            }
+          }
         }
       }
     },
     "rewards": {
       ".read": false,
-      ".write": "newData.hasChildren([ 'uid', 'deviceId', 'stopOrder', 'reward', 'email', 'storedInECD', 'totalOrder', 'timestamp' ])",
-      "uid": {
-        ".validate": "newData.val() === auth.uid"
-      },
-      "storedInECD": {
-        ".validate": "newData.val() === false"
-      }
+      ".write": false
     },
+    "pushKeys": {
+      ".write": "newData.hasChildren([ 'pushToken' ])",
+      ".read" : false
+    }
   }
 }

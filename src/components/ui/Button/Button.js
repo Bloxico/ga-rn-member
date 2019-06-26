@@ -1,42 +1,51 @@
 // @flow
 import React from 'react';
-import { Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Button } from 'react-native-elements';
+
+type InputStatuses = 'solid' | 'clear' | 'outline';
 
 type Props = {
-  onPress: Function,
-  children: any,
-  disabled?: boolean,
+  icon?: any,
+  buttonStyle?: any,
+  titleStyle?: any,
+  type?: InputStatuses,
 };
 
-const Button = ({ onPress, disabled, children }: Props) => {
-  const { buttonStyle, textStyle } = styles;
+const GAButton = (props: Props) => {
+  const {
+    buttonDefaultStyle,
+    greenButton,
+    buttonWithIcon,
+    buttonTitle,
+    secondaryTitle,
+    grayButton,
+  } = styles;
+  const { icon, buttonStyle, titleStyle, type, style } = props;
 
   return (
-    <TouchableOpacity disabled={disabled} onPress={onPress} style={buttonStyle}>
-      <Text style={textStyle}>{children}</Text>
-    </TouchableOpacity>
+    <Button
+      buttonStyle={[
+        type !== 'clear' && greenButton,
+        type !== 'clear' && icon && buttonWithIcon,
+        type !== 'clear' && buttonDefaultStyle,
+        style,
+      ]}
+      titleStyle={[buttonTitle, titleStyle]}
+      disabledStyle={grayButton}
+      disabledTitleStyle={secondaryTitle}
+      {...props}
+    />
   );
 };
 
 const styles = StyleSheet.create({
-  textStyle: {
-    alignSelf: 'center',
-    color: '#007aff',
-    fontSize: 16,
-    fontWeight: '600',
-    paddingTop: 10,
-    paddingBottom: 10,
-  },
-  buttonStyle: {
-    flex: 1,
-    alignSelf: 'stretch',
-    backgroundColor: '#fff',
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#007aff',
-    marginLeft: 5,
-    marginRight: 5,
-  },
+  buttonDefaultStyle: { width: '100%', height: 48, borderRadius: 24 },
+  greenButton: { backgroundColor: '#27C556' },
+  grayButton: { backgroundColor: '#11152e' },
+  buttonWithIcon: { paddingLeft: 46 },
+  buttonTitle: { fontSize: 16, fontWeight: 'bold' },
+  secondaryTitle: { color: '#4E5B61' },
 });
 
-export default Button;
+export default GAButton;

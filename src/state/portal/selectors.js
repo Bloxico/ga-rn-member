@@ -27,3 +27,11 @@ export const isClaimButton = ({ portal: { claimButton } }) => ({
 export const getRewardToClaim = ({ portal: { toClaimReward } }) => ({
   toClaimReward,
 });
+
+export const isBatteryFetching = ({ portal: { batteryFetchInProgress } }) => ({
+  batteryFetchInProgress,
+});
+
+export const isUserIntegrated = ({ portal: { userIntegrated } }) => ({
+  userIntegrated,
+});

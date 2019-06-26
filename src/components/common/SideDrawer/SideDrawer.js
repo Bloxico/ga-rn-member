@@ -6,23 +6,21 @@ import {
   StyleSheet,
   Image,
   ScrollView,
-  TouchableWithoutFeedback,
+  TouchableOpacity,
+  Linking,
 } from 'react-native';
-import SVGUri from 'react-native-svg-uri';
 import DeviceInfo from 'react-native-device-info';
-
 // $FlowIssue
-import { WhiteStandardText } from '@ui';
+import { WhiteStandardText, GrayStandardText, Badge } from '@ui';
 // $FlowIssue
-import iconDashboard from '@images/icon-dashboard.svg';
-// $FlowIssue
-import iconSignOut from '@images/icon-signout.svg';
+import { PARTNER_LINK } from '@constants';
 
 type Props = {
   user: any,
   logout: Function,
   navigation: any,
   addBattery: Function,
+  ecdRedirect: Function,
 };
 
 export default class drawerContentComponents extends Component<Props> {
@@ -35,63 +33,63 @@ export default class drawerContentComponents extends Component<Props> {
     logout({ navigation });
   };
 
-  renderMenu = () => {
-    let menuArray = [
-      {
-        id: 1,
-        screen: 'Dashboard',
-        title: 'Dashboard',
-        image: iconDashboard,
-      },
-    ];
-    const { navigation } = this.props;
-    const { drawerItem, drawerItemImage } = styles;
+  ecdRedirect = () => {
+    const { user, ecdRedirect } = this.props;
+    ecdRedirect({ user });
+  };
 
-    return menuArray.map<any>(item => {
-      return (
-        <TouchableWithoutFeedback
-          onPress={() => navigation.navigate(item.screen)}
-          key={item.id}
-        >
-          <View style={drawerItem}>
-            <SVGUri style={drawerItemImage} source={item.image} />
-            <WhiteStandardText>{item.title}</WhiteStandardText>
-          </View>
-        </TouchableWithoutFeedback>
-      );
-    });
+  partnerRedirect = () => {
+    Linking.openURL(PARTNER_LINK);
   };
 
   render() {
     const { user } = this.props;
     const {
       drawerItem,
-      drawerItemImage,
       container,
       drawerHeader,
       avatar,
       drawerHeaderText,
       drawerMenu,
+      drawerHeaderTextContainer,
+      drawerHeaderDescription,
+      avatarContainer,
     } = styles;
 
     return (
       <View style={container}>
         <SafeAreaView forceInset={{ bottom: 'never' }} style={container}>
           <View style={drawerHeader}>
-            <Image style={avatar} source={{ uri: user.photo }} />
-            <View style={drawerHeaderText}>
-              <WhiteStandardText>{user.name}</WhiteStandardText>
+            <View style={avatarContainer}>
+              <Image style={avatar} source={{ uri: user.photo }} />
+            </View>
+            <View style={drawerHeaderTextContainer}>
+              <WhiteStandardText style={drawerHeaderText}>
+                {user.name}
+              </WhiteStandardText>
+              <GrayStandardText style={drawerHeaderDescription}>
+                {user.email}
+              </GrayStandardText>
             </View>
           </View>
           <View style={drawerMenu}>
             <ScrollView>
-              {this.renderMenu()}
-              <TouchableWithoutFeedback onPress={this.logout}>
-                <View style={drawerItem}>
-                  <SVGUri style={drawerItemImage} source={iconSignOut} />
-                  <WhiteStandardText>Sign out</WhiteStandardText>
+              <TouchableOpacity onPress={this.partnerRedirect}>
+                <View style={{ ...drawerItem }}>
+                  <WhiteStandardText>Verdeus Platform</WhiteStandardText>
                 </View>
-              </TouchableWithoutFeedback>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={this.ecdRedirect}>
+                <View style={{ ...drawerItem }}>
+                  <WhiteStandardText>EnergyCoin Dashboard</WhiteStandardText>
+                  <Badge status="success" />
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={this.logout}>
+                <View style={drawerItem}>
+                  <WhiteStandardText>Log out</WhiteStandardText>
+                </View>
+              </TouchableOpacity>
             </ScrollView>
           </View>
         </SafeAreaView>
@@ -106,17 +104,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingTop: 12,
     paddingBottom: 12,
-    paddingLeft: 20,
+    paddingLeft: 24,
+    borderBottomColor: '#A9BEC799',
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   drawerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 20,
+    paddingTop: 30,
     paddingBottom: 20,
   },
+  avatarContainer: {
+    borderTopLeftRadius: 27,
+    borderTopRightRadius: 13,
+    borderBottomLeftRadius: 13,
+    borderBottomRightRadius: 27,
+    marginLeft: 24,
+    overflow: 'hidden',
+  },
   container: { flex: 1 },
-  drawerItemImage: { width: 35, height: 35 },
-  avatar: { width: 50, height: 50, borderRadius: 25, marginLeft: 20 },
-  drawerHeaderText: { paddingLeft: 20 },
-  drawerMenu: { flex: 1, backgroundColor: '#151b3b', paddingTop: 20 },
+  avatar: { width: 60, height: 60 },
+  drawerHeaderTextContainer: { paddingLeft: 24 },
+  drawerHeaderText: { fontSize: 21 },
+  drawerHeaderDescription: { marginTop: 5 },
+  drawerMenu: {
+    flex: 1,
+    backgroundColor: '#0c0f20',
+    marginTop: 20,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#A9BEC799',
+  },
 });

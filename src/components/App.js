@@ -28,7 +28,7 @@ const AppDrawerNavigator = createDrawerNavigator(
     Dashboard: AppStack,
   },
   {
-    drawerBackgroundColor: '#11152e',
+    drawerBackgroundColor: '#0c0f20',
     contentComponent: SideDrawer,
   },
 );
@@ -54,5 +54,5 @@ export default class App extends Component<Props> {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0c0f21' },
+  container: { flex: 1, backgroundColor: '#101314' },
 });

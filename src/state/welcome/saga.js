@@ -3,7 +3,7 @@
 import { all, takeEvery, put, call } from 'redux-saga/effects';
 import { GoogleSignin } from 'react-native-google-signin';
 import firebase from 'react-native-firebase';
-
+import AsyncStorage from '@react-native-community/async-storage';
 // $FlowIssue
 import * as actions from '@actions';
 
@@ -68,8 +68,22 @@ export function* isLogged$({
     yield GoogleSignin.configure();
 
     yield firebase.app();
-
     const isLogged = yield GoogleSignin.isSignedIn();
+    let deviceId = yield AsyncStorage.getItem('@DeviceId');
+
+    if (!deviceId) {
+      deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
+        /[xy]/g,
+        function(c) {
+          const r = (Math.random() * 16) | 0,
+            v = c === 'x' ? r : (r & 0x3) | 0x8;
+
+          return v.toString(16);
+        },
+      );
+
+      yield AsyncStorage.setItem('@DeviceId', deviceId);
+    }
 
     if (isLogged) {
       const userInfo = yield GoogleSignin.getCurrentUser();
@@ -77,7 +91,7 @@ export function* isLogged$({
       if (userInfo) {
         const { user } = userInfo;
 
-        yield put(actions.isLoggedSuccess({ user }));
+        yield put(actions.isLoggedSuccess({ user: { ...user, deviceId } }));
       } else {
         const {
           user,
@@ -91,18 +105,24 @@ export function* isLogged$({
         );
 
         // login with credential
-        const firebaseUserCredential = yield firebase
-          .auth()
-          .signInWithCredential(credential);
+        const {
+          user: { uid },
+        } = yield firebase.auth().signInWithCredential(credential);
 
         yield put(
           actions.isLoggedSuccess({
-            user: { ...user, uid: firebaseUserCredential.user.uid },
+            user: {
+              ...user,
+              uid,
+              deviceId,
+            },
           }),
         );
       }
+
       yield navigation.navigate('Dashboard');
     }
+
     yield put(actions.isLoggedSuccess());
   } catch (error) {
     yield put(actions.isLoggedFail());

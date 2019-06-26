@@ -10,20 +10,24 @@ target 'GAMember' do
     pod 'React', :path => '../node_modules/react-native', :subspecs => [
         'Core',
         'CxxBridge', # Include this for RN >= 0.47
+        'RCTActionSheet',
+        'RCTGeolocation',
+        'RCTLinkingIOS',
+        'RCTSettings',
+        'RCTVibration',
         'DevSupport', # Include this to enable In-App Devmenu if RN >= 0.43
         'RCTText',
         'RCTNetwork',
         'RCTImage',
         'RCTWebSocket', # Needed for debugging
         'RCTAnimation', # Needed for FlatList and animations running on native UI thread
-        # Add any other subspecs you want to use in your project
       ]
       # Explicitly include Yoga if you are using RN >= 0.42.0
       pod 'yoga', :path => '../node_modules/react-native/ReactCommon/yoga'
-    pod 'Firebase/Core', '~> 5.15.0'
-    pod 'Firebase/Auth', '~> 5.15.0'
-    pod 'Firebase/Database', '~> 5.15.0'
-    pod 'Firebase/Messaging', '~> 5.15.0'
+    pod 'Firebase/Core', '~> 5.20.1'
+    pod 'Firebase/Auth', '~> 5.20.1'
+    pod 'Firebase/Database', '~> 5.20.1'
+#    pod 'Firebase/Messaging', '~> 5.20.1'
     pod 'GoogleSignIn', '~> 4.4.0'
 
 pod 'DoubleConversion', :podspec => '../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec'
@@ -32,13 +36,25 @@ pod 'DoubleConversion', :podspec => '../node_modules/react-native/third-party-po
 
     pod 'RNGestureHandler', :path => '../node_modules/react-native-gesture-handler'
 
-  pod 'react-native-battery', :path => '../node_modules/react-native-battery'
+  #pod 'react-native-battery', :path => '../node_modules/react-native-battery'
 
   pod 'RNBackgroundFetch', :path => '../node_modules/react-native-background-fetch'
 
 
   pod 'RNSVG', :path => '../node_modules/react-native-svg'
-pod 'RNDeviceInfo', :path => '../node_modules/react-native-device-info'
+  pod 'RNDeviceInfo', :path => '../node_modules/react-native-device-info'
+pod 'RNVectorIcons', :path => '../node_modules/react-native-vector-icons'
+pod 'BVLinearGradient', :path => '../node_modules/react-native-linear-gradient'
+
+pod 'RNCAsyncStorage', :path => '../node_modules/@react-native-community/async-storage'
+
+#pod 'lottie-ios', :path => '../node_modules/lottie-ios'
+
+#pod 'lottie-react-native', :path => '../node_modules/lottie-react-native'
+
+#pod 'RNVoipPushNotification', :path => '../node_modules/react-native-voip-push-notification'
+
+pod 'react-native-netinfo', :path => '../node_modules/@react-native-community/netinfo'
 
 post_install do |installer|
   installer.pods_project.targets.each do |target|

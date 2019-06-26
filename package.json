@@ -10,8 +10,7 @@
     "ios:dep": "cd ios && pod install",
     "link": "react-native link react-native-firebase react-native-google-signin react-native-gesture-handler",
     "format": "./node_modules/.bin/prettier --config=\".prettierrc.json\" --write \"src/**/*.js\" \"*.js\"",
-    "lint": "eslint --cache --config .eslintrc --format=node_modules/eslint-formatter-pretty \"src/**/*.js\" \"*.js\"",
-    "flow-typed": "yarn flow-typed install"
+    "lint": "eslint --cache --config .eslintrc --format=node_modules/eslint-formatter-pretty \"src/**/*.js\" \"*.js\""
   },
   "husky": {
     "hooks": {
@@ -20,24 +19,26 @@
     }
   },
   "dependencies": {
-    "react": "16.8.3",
-    "react-native": "0.59.1",
+    "@react-native-community/async-storage": "^1.4.2",
+    "@react-native-community/netinfo": "^3.2.1",
+    "react": "16.8.6",
+    "react-native": "0.59.8",
     "react-native-axios": "^0.17.1",
     "react-native-background-fetch": "^2.5.1",
     "react-native-base64": "^0.0.2",
-    "react-native-battery": "^0.1.17",
     "react-native-circular-progress": "^1.1.0",
-    "react-native-device-battery": "^1.0.0",
+    "react-native-countdown-component": "^2.4.0",
     "react-native-device-info": "^1.4.3",
-    "react-native-firebase": "^5.2.3",
+    "react-native-elements": "^1.1.0",
+    "react-native-firebase": "^5.3.0",
     "react-native-gesture-handler": "^1.1.0",
     "react-native-google-signin": "^1.2.1",
+    "react-native-linear-gradient": "^2.5.4",
     "react-native-modal": "^9.0.0",
     "react-native-push-notification": "^3.1.2",
-    "react-native-qrcode": "^0.2.7",
     "react-native-svg": "^9.3.7",
     "react-native-svg-uri": "^1.2.3",
-    "react-native-voip-push-notification": "^1.1.4",
+    "react-native-vector-icons": "^6.4.2",
     "react-navigation": "^3.5.1",
     "react-redux": "^6.0.1",
     "recompose": "^0.30.0",
@@ -45,8 +46,7 @@
     "redux-actions": "^2.6.5",
     "redux-saga": "^1.0.2",
     "redux-thunk": "^2.3.0",
-    "reselect": "^4.0.0",
-    "victory-native": "^32.0.2"
+    "reselect": "^4.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.3.4",

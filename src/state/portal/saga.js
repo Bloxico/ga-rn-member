@@ -5,6 +5,7 @@ import firebase from 'react-native-firebase';
 import base64 from 'react-native-base64';
 import { Linking } from 'react-native';
 import BackgroundFetch from 'react-native-background-fetch';
+import AsyncStorage from '@react-native-community/async-storage';
 
 import {
   CLIENT_ID,
@@ -20,17 +21,22 @@ import http from '@http';
 import * as actions from './actions';
 
 export function* fetchBattery$({
-  payload: { level, isCharging, user },
+  payload: { level, isCharging, user, updateClaim = true },
 }: any): Generator<*, *, *> {
   try {
     let batteryList = [];
     let sumRewards = 0;
     let currentReward = 0;
     let lastClaim;
+    let { deviceId } = user;
+
+    if (!user.devideId) {
+      deviceId = yield AsyncStorage.getItem('@DeviceId');
+    }
 
     const batteryLevelRef = firebase
       .database()
-      .ref(`/users/${user.uid}/devices/${user.id}`);
+      .ref(`/users/${user.uid}/devices/${deviceId}`);
 
     batteryLevelRef.keepSynced(true);
 
@@ -169,7 +175,7 @@ export function* fetchBattery$({
             re[0].reward += reward;
             firebase
               .database()
-              .ref(`/users/${user.uid}/devices/${user.id}`)
+              .ref(`/users/${user.uid}/devices/${deviceId}`)
               .child('current_reward')
               .once(
                 'value',
@@ -179,13 +185,13 @@ export function* fetchBattery$({
 
                     firebase
                       .database()
-                      .ref(`/users/${user.uid}/devices/${user.id}`)
+                      .ref(`/users/${user.uid}/devices/${deviceId}`)
                       .child('current_reward')
                       .update({ reward: currentReward });
                   } else {
                     firebase
                       .database()
-                      .ref(`/users/${user.uid}/devices/${user.id}`)
+                      .ref(`/users/${user.uid}/devices/${deviceId}`)
                       .child('current_reward')
                       .set({
                         reward: reward,
@@ -203,7 +209,7 @@ export function* fetchBattery$({
           re[0].rewardPreventedTime = obj.timestamp;
           firebase
             .database()
-            .ref(`/users/${user.uid}/devices/${user.id}/claim_ios`)
+            .ref(`/users/${user.uid}/devices/${deviceId}/claim_ios`)
             .child('timestamps')
             .push({ time: batteryList[0].timestamp });
         }
@@ -218,7 +224,7 @@ export function* fetchBattery$({
 
     yield firebase
       .database()
-      .ref(`/users/${user.uid}/devices/${user.id}`)
+      .ref(`/users/${user.uid}/devices/${deviceId}`)
       .child('events')
       .set(newBatteryList);
 
@@ -230,7 +236,9 @@ export function* fetchBattery$({
       !(new Date(lastClaim.time) >= new Date(timestamp))
     ) {
       timestamp = Object.values(lastClaim.timestamps).sort(function(a, b) {
+        // $FlowIssue
         return new Date(a.time) - new Date(b.time);
+        // $FlowIssue
       })[0].time;
     }
 
@@ -249,6 +257,8 @@ export function* fetchBattery$({
     const stepReward = newBatteryList[newBatteryList.length - 1].chargingStatus
       ? 0
       : a[0].stepReward;
+
+    if (!updateClaim) currentReward = 0;
 
     yield put(
       actions.fetchBatterySuccess({
@@ -271,7 +281,7 @@ export function* claimReward$({
   try {
     yield firebase
       .database()
-      .ref(`/users/${user.uid}/devices/${user.id}`)
+      .ref(`/users/${user.uid}/devices/${user.deviceId}`)
       .child('current_reward')
       .set({
         reward: reward,
@@ -282,7 +292,7 @@ export function* claimReward$({
 
     yield firebase
       .database()
-      .ref(`/users/${user.uid}/devices/${user.id}`)
+      .ref(`/users/${user.uid}/devices/${user.deviceId}`)
       .child('claim_ios')
       .set({ currentLevel, time: new Date(), reward });
 
@@ -297,12 +307,22 @@ export function* claimReward$({
   }
 }
 
-export function* pushToken$({ payload: { token } }: any): Generator<*, *, *> {
+export function* pushToken$({
+  payload: {
+    token: { token },
+  },
+}: any): Generator<*, *, *> {
   try {
-    yield firebase
-      .database()
-      .ref(`/pushKeys`)
-      .push({ pushToken: token.token });
+    const oldToken = yield AsyncStorage.getItem('@DevicePushToken');
+
+    if (!oldToken && oldToken !== token) {
+      yield AsyncStorage.setItem('@DevicePushToken', token);
+
+      yield firebase
+        .database()
+        .ref(`/pushKeys`)
+        .push({ pushToken: token });
+    }
   } catch (error) {
     // TODO@tolja implement error
   }
@@ -311,9 +331,15 @@ export function* pushToken$({ payload: { token } }: any): Generator<*, *, *> {
 export function* addBattery$({
   payload: { level, isCharging, user, isBackground, notification },
 }: any): Generator<*, *, *> {
+  let { deviceId } = user;
+
+  if (!deviceId) {
+    deviceId = yield AsyncStorage.getItem('@DeviceId');
+  }
+
   const batteryLevelRef = firebase
     .database()
-    .ref(`/users/${user.uid}/devices/${user.id}`);
+    .ref(`/users/${user.uid}/devices/${deviceId}`);
 
   batteryLevelRef.keepSynced(true);
 
@@ -341,7 +367,7 @@ export function* addBattery$({
 
   yield firebase
     .database()
-    .ref(`/users/${user.uid}/devices/${user.id}`)
+    .ref(`/users/${user.uid}/devices/${deviceId}`)
     .child('events')
     .set(batteryList)
     .then(() => {
@@ -383,7 +409,8 @@ export function* ecdRedirect$({ payload: { user } }: any): Generator<*, *, *> {
               .then(() => {
                 Linking.openURL(`${ECD_LINK}auth?token=${token.accessToken}`);
               })
-              .catch(() => {
+              .catch(error => {
+                console.log(error.response);
                 http
                   .post(
                     'oauth/token',
@@ -416,17 +443,62 @@ export function* ecdRedirect$({ payload: { user } }: any): Generator<*, *, *> {
                         refreshToken: data.refresh_token,
                       });
                   })
-                  .catch(() => {
+                  .catch(error => {
+                    console.log(error.response);
                     // TODO@tolja implement error
                   });
               });
         },
-        () => {
+        error => {
+          console.log(error);
           // TODO@tolja implement error
         },
       );
+
+    const { email } = user;
+
+    yield AsyncStorage.setItem(
+      '@DeviceConnectedEmail',
+      JSON.stringify({ deviceConnected: { email, connected: true } }),
+    );
+
+    yield put(actions.ecdRedirectSuccess({ userIntegrated: true }));
   } catch (error) {
+    console.log(error);
     yield put(actions.ecdRedirectFail());
+  }
+}
+
+export function* isIntegrated$({
+  payload: { user, integrate = false },
+}: any): Generator<*, *, *> {
+  try {
+    const { email } = user;
+    let deviceEmail = yield AsyncStorage.getItem('@DeviceConnectedEmail');
+
+    if (!deviceEmail) {
+      deviceEmail = JSON.stringify({
+        deviceConnected: { email, connected: integrate },
+      });
+    }
+
+    if (integrate)
+      yield AsyncStorage.setItem(
+        '@DeviceConnectedEmail',
+        JSON.stringify(deviceEmail),
+      );
+
+    const { deviceConnected } = JSON.parse(deviceEmail);
+    let userIntegrated = false;
+
+    if (deviceConnected && deviceConnected.email === email) {
+      userIntegrated = deviceConnected.connected;
+    }
+    console.log(deviceConnected);
+    yield put(actions.ecdConnectedSuccess({ userIntegrated }));
+  } catch (error) {
+    console.log(error);
+    // TODO@tolja implement error
   }
 }
 
@@ -437,4 +509,5 @@ export default function*() {
   yield all([takeLatest(actions.BATTERY_FETCH, fetchBattery$)]);
   yield all([takeEvery(actions.PUSH_TOKEN, pushToken$)]);
   yield all([takeEvery(actions.CLAIM_REWARDS, claimReward$)]);
+  yield all([takeEvery(actions.ECD_CONNECTED, isIntegrated$)]);
 }

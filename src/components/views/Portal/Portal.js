@@ -7,33 +7,42 @@ import {
   StyleSheet,
   NativeEventEmitter,
   NativeModules,
-  Easing,
   AppState,
+  Linking,
+  PixelRatio,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-navigation';
-import { AnimatedCircularProgress } from 'react-native-circular-progress';
-import DeviceBattery from 'react-native-device-battery';
 import BackgroundFetch from 'react-native-background-fetch';
 import PushNotification from 'react-native-push-notification';
 import SVGUri from 'react-native-svg-uri';
-import Modal from 'react-native-modal';
 import DeviceInfo from 'react-native-device-info';
+import LinearGradient from 'react-native-linear-gradient';
+import NetInfo from '@react-native-community/netinfo';
+import { AnimatedCircularProgress } from 'react-native-circular-progress';
+import firebase from 'react-native-firebase';
 
-import { REWARD_SUPPLY } from '@constants';
+// $FlowIssue
+import { REWARD_SUPPLY, PARTNER_LINK } from '@constants';
 import {
   CardSection,
   Card,
   WhiteStandardText,
   GrayStandardText,
   Button,
+  Badge,
+  AnimatedChunks,
+  Spinner,
+  // $FlowIssue
 } from '@ui';
+// $FlowIssue
 import iconMenuSVG from '@images/icon-menu.svg';
-import iconHelpSVG from '@images/icon-help.svg';
+// $FlowIssue
+import energySVG from '@images/energycoin.svg';
+// $FlowIssue
+import logoSVG from '@images/verdeus.svg';
 
 type Props = {
-  logout: Function,
-  navigation: any,
-  ecdRedirect: Function,
   user: any,
   addBattery: Function,
   fetchBattery: Function,
@@ -44,58 +53,89 @@ type Props = {
   stepReward: number,
   claimRewards: Function,
   toClaimReward: number,
+  batteryFetchInProgress: boolean,
+  ecdRedirect: Function,
 };
 
 type State = {
-  showHelp: boolean,
-  animationCompleted: boolean,
   claimReward: number,
   isCharging: boolean,
   appState: any,
+  isNetConnected: boolean,
+  isCollectable: boolean,
+  sumRewards: number,
+  collectInProgress: boolean,
 };
+const pixelRatio = PixelRatio.get();
+const { width: deviceWidth, height: deviceHeight } = Dimensions.get('window');
+const rem = (deviceWidth / 375 + deviceHeight / 813) / 2;
+// const rem2 = deviceHeight / 813;
 
 class Portal extends Component<Props, State> {
   static navigationOptions = ({ navigation }: any) => {
     return {
       title: 'Dashboard',
       headerStyle: {
-        backgroundColor: '#0c0f21',
-        borderBottomColor: '#ffffff2a',
+        backgroundColor: '#0c0f20',
+        borderBottomWidth: 0,
       },
+      headerBackground: (
+        <LinearGradient
+          colors={['#2b3273', '#0f132a']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          locations={[0.1, 0.99]}
+          style={{
+            flex: 1,
+            opacity: 0.5,
+            width: '100%',
+          }}
+        />
+      ),
       headerTintColor: '#FFF',
       headerLeft: (
         <TouchableOpacity
-          style={{ paddingLeft: 15 }}
+          style={{ padding: 15 }}
           onPress={() => navigation.openDrawer()}
         >
-          <SVGUri style={{ width: 30, height: 15 }} source={iconMenuSVG} />
+          <SVGUri style={{ width: 20, height: 14 }} source={iconMenuSVG} />
+          <Badge
+            status="success"
+            onPress={() => navigation.openDrawer()}
+            containerStyle={{ position: 'absolute', top: 13, right: 13 }}
+          />
         </TouchableOpacity>
       ),
     };
   };
 
   state = {
-    showHelp: false,
-    animationCompleted: false,
     claimReward: 0,
     isCharging: false,
     appState: AppState.currentState,
+    isCollectable: true,
+    isNetConnected: true,
+    sumRewards: -1,
+    collectInProgress: false,
   };
 
+  animation: any;
+
   componentWillMount() {
-    const { fetchBattery, user } = this.props;
+    const { user } = this.props;
 
-    DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
-      const isCharging = batteryState === 'charging' || batteryState === 'full';
-
-      fetchBattery({ level: batteryLevel, isCharging, user });
-
-      this.setState({ isCharging });
-    });
+    this.rewardFetching();
+    this.appEventRefresh(true, user);
   }
 
   componentDidMount(): void {
     const { addBattery, user, pushToken } = this.props;
+    console.log(
+      'PIXEL_RATIO, WIDTH, HEIGHT,',
+      pixelRatio,
+      deviceWidth,
+      deviceHeight,
+    );
 
     BackgroundFetch.configure(
       {
@@ -108,7 +148,12 @@ class Portal extends Component<Props, State> {
           const isCharging =
             batteryState === 'charging' || batteryState === 'full';
 
-          addBattery({ level: batteryLevel, isCharging, user });
+          addBattery({
+            level: batteryLevel,
+            isCharging,
+            user,
+            isBackground: true,
+          });
         });
       },
       () => {
@@ -118,18 +163,18 @@ class Portal extends Component<Props, State> {
 
     PushNotification.configure({
       onRegister: function(token) {
-        pushToken({ token, user });
+        pushToken({ token, user }); // TODO@tolja check if it is existing, put it in asyncStorage
       },
       onNotification: function(notification) {
-        DeviceBattery.getBatteryLevel().then(level => {
-          DeviceBattery.isCharging().then(isCharging => {
-            addBattery({
-              level,
-              isCharging,
-              user,
-              isBackground: false,
-              notification,
-            });
+        DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
+          const isCharging =
+            batteryState === 'charging' || batteryState === 'full';
+
+          addBattery({
+            batteryLevel,
+            isCharging,
+            user,
+            notification,
           });
         });
       },
@@ -138,7 +183,7 @@ class Portal extends Component<Props, State> {
         badge: true,
         sound: true,
       },
-      popInitialNotification: false,
+      popInitialNotification: true,
       requestPermissions: true,
     });
 
@@ -151,57 +196,63 @@ class Portal extends Component<Props, State> {
       this.onBatteryStateChanged,
     );
 
-    deviceInfoEmitter.addListener(
-      'batteryLevelDidChange',
-      this.onBatteryLevelChanged,
-    );
-
     AppState.addEventListener('change', this.handleAppStateChange);
   }
 
   componentWillReceiveProps(nextProps: any): void {
-    const { percentTillRewarded, timeTillRewarded, toClaimReward } = nextProps;
-    const { animationCompleted, isCharging } = this.state;
+    const { toClaimReward, stepReward } = nextProps;
+    const { isCollectable } = this.state;
 
-    if (toClaimReward > 0) this.setState({ claimReward: toClaimReward });
+    if (toClaimReward > 0 && isCollectable)
+      this.setState({ claimReward: toClaimReward });
+    else if (toClaimReward > 0 && stepReward)
+      this.setState({ claimReward: REWARD_SUPPLY[stepReward + 1] + 1 });
 
-    if (!animationCompleted) {
-      this.setState({ animationCompleted: true });
-
-      if (!isCharging)
-        this.circularProgress.reAnimate(
-          percentTillRewarded,
-          100,
-          timeTillRewarded * 60000,
-        );
-    }
+    NetInfo.fetch().then(({ isConnected }) => {
+      this.setState({ isNetConnected: isConnected });
+    });
   }
 
   componentWillUnmount() {
-    const { addBattery, user } = this.props;
+    const { user } = this.props;
 
-    DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
-      const isCharging = batteryState === 'charging' || batteryState === 'full';
-
-      addBattery({ level: batteryLevel, isCharging, user });
-    });
+    this.appEventRefresh(false, user);
 
     AppState.removeEventListener('change', this.handleAppStateChange);
   }
 
+  rewardFetching = async () => {
+    const { user } = this.props;
+    try {
+      await firebase
+        .database()
+        .ref(`/users/${user.uid}/devices/${user.deviceId}`)
+        .child('sum_rewards')
+        .on('value', snapshot => {
+          const { collectInProgress } = this.state;
+
+          if (collectInProgress) {
+            this.setState({ collectInProgress: false });
+          }
+
+          this.setState({ sumRewards: snapshot.val() || 0 });
+        });
+    } catch (error) {
+      // TODO@tolja implement error
+    }
+  };
+
   handleAppStateChange = (nextAppState: string) => {
-    const { fetchBattery, user } = this.props;
+    const { user, batteryFetchInProgress } = this.props;
     const { appState } = this.state;
 
-    if (appState.match(/inactive|background/) && nextAppState === 'active') {
-      DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
-        const isCharging =
-          batteryState === 'charging' || batteryState === 'full';
-
-        fetchBattery({ level: batteryLevel, isCharging, user });
-
-        this.setState({ isCharging });
-      });
+    if (
+      // $FlowIssue
+      appState.match(/inactive|background/) &&
+      nextAppState === 'active' &&
+      !batteryFetchInProgress
+    ) {
+      this.appEventRefresh(true, user); // TODO@tolja consider removing?
     }
 
     this.setState({ appState: nextAppState });
@@ -222,46 +273,31 @@ class Portal extends Component<Props, State> {
     this.setState({ isCharging: isChargingState });
   };
 
-  onBatteryLevelChanged = (level: number) => {
-    const { user, fetchBattery } = this.props;
-
-    DeviceInfo.getPowerState().then(({ batteryState }) => {
-      const isCharging = batteryState === 'charging' || batteryState === 'full';
-
-      fetchBattery({ level, isCharging, user });
-
-      this.setState({ isCharging });
-    });
-  };
-
-  logout = () => {
-    const { logout, navigation } = this.props;
-    logout({ navigation });
-  };
-
-  ecdRedirect = () => {
-    const { user, ecdRedirect } = this.props;
-    ecdRedirect({ user });
-  };
-
   rewardCompleted = ({ finished }: any) => {
-    const { fetchBattery, user } = this.props;
+    const { user } = this.props;
 
     if (finished) {
-      this.setState({ animationCompleted: false });
+      this.setState({ isCollectable: true });
 
-      DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
-        const isCharging =
-          batteryState === 'charging' || batteryState === 'full';
-
-        fetchBattery({ level: batteryLevel, isCharging, user });
-      });
+      this.appEventRefresh(true, user);
     }
   };
 
-  toggleHelp = () => {
-    const { showHelp } = this.state;
-    this.setState({ showHelp: !showHelp });
+  appEventRefresh = (
+    fetch: boolean,
+    user: any,
+    updateClaim: boolean = true,
+  ) => {
+    const { addBattery, fetchBattery } = this.props;
+
+    DeviceInfo.getPowerState().then(({ batteryState, batteryLevel }) => {
+      const isCharging = batteryState === 'charging' || batteryState === 'full';
+
+      if (fetch)
+        fetchBattery({ level: batteryLevel, isCharging, user, updateClaim });
+      else addBattery({ level: batteryLevel, isCharging, user });
+      if (isCharging !== this.state.isCharging) this.setState({ isCharging });
+    });
   };
 
   rewardClaim = () => {
@@ -272,137 +308,270 @@ class Portal extends Component<Props, State> {
       currentLevel: stepReward,
       user,
       reward: claimReward,
-      sumReward: reward,
+      sumReward: reward || 0,
     });
 
-    this.setState({ claimReward: 0 });
+    this.setState({
+      claimReward: 0,
+      isCollectable: false,
+      collectInProgress: true,
+    });
   };
 
-  circularProgress: any;
+  partnerRedirect = () => {
+    Linking.openURL(PARTNER_LINK);
+  };
+
+  ecdRedirect = () => {
+    const { user, ecdRedirect } = this.props;
+    ecdRedirect({ user });
+  };
 
   render() {
-    const { reward, stepReward } = this.props;
-    const { showHelp, claimReward, isCharging } = this.state;
+    const { stepReward, timeTillRewarded, percentTillRewarded } = this.props;
     const {
       container,
       bigFont,
-      percentText,
       percentProgress,
-      modalContent,
-      modalHeader,
-      modalHeaderIcon,
-      modalHeaderText,
       separateText,
-      separator,
-      iconHelp,
+      pageStyle,
+      gradientFixedHeader,
     } = styles;
+    const {
+      claimReward,
+      isCharging,
+      collectInProgress,
+      isNetConnected,
+      sumRewards,
+    } = this.state;
+    let buttonTitle = '';
+
+    if (claimReward === 0) {
+      if (isCharging) buttonTitle = 'Tip: Charge battery to 100%';
+      else if (stepReward === REWARD_SUPPLY.length)
+        buttonTitle = 'Rewarding starts after charging';
+      else buttonTitle = `Next reward is ${1 + REWARD_SUPPLY[stepReward]} GOG`;
+    } else {
+      if (!isNetConnected) buttonTitle = 'No Internet Connection';
+      else buttonTitle = `Collect ${claimReward} GOG`;
+    }
+
+    if (!timeTillRewarded)
+      return (
+        <View style={{ flex: 1, backgroundColor: '#101314' }}>
+          <Spinner />
+        </View>
+      );
 
     return (
-      <SafeAreaView style={container}>
-        <Modal
-          isVisible={showHelp}
-          onSwipeComplete={this.toggleHelp}
-          swipeDirection="up"
-          animationIn="slideInDown"
-          animationOut="slideOutUp"
-          onBackdropPress={this.toggleHelp}
-        >
-          <View style={modalContent}>
-            <View style={modalHeader}>
-              <SVGUri style={modalHeaderIcon} source={iconHelpSVG} />
-
-              <WhiteStandardText style={modalHeaderText}>
-                Rewarding
-              </WhiteStandardText>
-            </View>
-
-            <View style={separateText}>
-              <WhiteStandardText>
-                First reward is after 9 hours of not charging your phone.
-              </WhiteStandardText>
-            </View>
-
-            <View>
-              <WhiteStandardText>
-                Every next reward requires less time and it is possible to
-                accumulate maximum 15 GOG in 72 hours.
-              </WhiteStandardText>
-            </View>
-          </View>
-        </Modal>
-
-        <ScrollView>
-          <Card>
-            <CardSection>
-              <GrayStandardText>Total accumulated</GrayStandardText>
+      <View style={pageStyle}>
+        <LinearGradient
+          colors={['#2b3273', '#0f132a']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          locations={[0.0, 0.99]}
+          style={gradientFixedHeader}
+        />
+        <SafeAreaView style={container}>
+          <Card style={{ height: PixelRatio.roundToNearestPixel(95 * rem) }}>
+            <CardSection style={{ alignItems: 'center' }}>
+              <GrayStandardText>TOTAL ACCUMULATED</GrayStandardText>
             </CardSection>
 
             <CardSection style={separateText}>
-              <WhiteStandardText style={bigFont}>
-                GOG {reward}
-              </WhiteStandardText>
-            </CardSection>
-
-            <CardSection style={separator}>
-              <GrayStandardText>
-                Reward accumulating: {stepReward}/15
-              </GrayStandardText>
-
-              <TouchableOpacity onPress={this.toggleHelp}>
-                <SVGUri style={iconHelp} source={iconHelpSVG} />
-              </TouchableOpacity>
-            </CardSection>
-
-            <CardSection style={percentText}>
-              <WhiteStandardText>Percent until Rewardedaaa</WhiteStandardText>
-            </CardSection>
-
-            <CardSection style={percentProgress}>
-              {isCharging || stepReward === 15 ? (
-                <AnimatedCircularProgress
-                  size={200}
-                  width={15}
-                  fill={100}
-                  tintColor="#fb9e1b"
-                  backgroundColor="#000000"
-                >
-                  {() => (
-                    <WhiteStandardText>
-                      {isCharging
-                        ? 'Unplug your charger!'
-                        : 'Charge your phone again'}
-                    </WhiteStandardText>
-                  )}
-                </AnimatedCircularProgress>
-              ) : (
-                <AnimatedCircularProgress
-                  size={200}
-                  width={15}
-                  ref={ref => (this.circularProgress = ref)}
-                  fill={0}
-                  tintColor="#76da7a"
-                  lineCap="square"
-                  rotation={0}
-                  backgroundColor="#3d5875"
-                  easing={Easing.quad}
-                  onAnimationComplete={this.rewardCompleted}
-                >
-                  {fill => (
-                    <WhiteStandardText>{fill.toFixed(2)}%</WhiteStandardText>
-                  )}
-                </AnimatedCircularProgress>
+              {sumRewards !== -1 && (
+                <WhiteStandardText style={bigFont}>
+                  {sumRewards}{' '}
+                  <GrayStandardText
+                    style={{
+                      fontSize: PixelRatio.roundToNearestPixel(16 * rem),
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    GOG
+                  </GrayStandardText>
+                </WhiteStandardText>
               )}
             </CardSection>
-            <CardSection>
-              <Button disabled={claimReward === 0} onPress={this.rewardClaim}>
-                {claimReward !== 0
-                  ? `Collect ${claimReward} GOG`
-                  : `Next reward is ${1 + REWARD_SUPPLY[stepReward]} GOG`}
-              </Button>
-            </CardSection>
           </Card>
-        </ScrollView>
-      </SafeAreaView>
+          <ScrollView
+            contentContainerStyle={{
+              flex: 1,
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Card style={{ flex: 1 }}>
+              <CardSection style={percentProgress}>
+                {isCharging || stepReward === 15 ? (
+                  <View
+                    style={{
+                      width: PixelRatio.roundToNearestPixel(246 * rem),
+                      height: PixelRatio.roundToNearestPixel(246 * rem),
+                    }}
+                  >
+                    {isCharging ? (
+                      <View
+                        style={{
+                          alignItems: 'center',
+                          flex: 1,
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <AnimatedCircularProgress
+                          fill={100}
+                          prefill={100}
+                          size={PixelRatio.roundToNearestPixel(246 * rem)}
+                          width={PixelRatio.roundToNearestPixel(20 * rem)}
+                          tintColor="#FFFFFF00"
+                          backgroundColor="#4e5b6173"
+                        >
+                          {() => (
+                            <WhiteStandardText
+                              style={{
+                                fontSize: PixelRatio.roundToNearestPixel(
+                                  30 * rem,
+                                ),
+                              }}
+                            >
+                              Charging...
+                            </WhiteStandardText>
+                          )}
+                        </AnimatedCircularProgress>
+                      </View>
+                    ) : (
+                      <View
+                        style={{
+                          alignItems: 'center',
+                          flex: 1,
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <AnimatedCircularProgress
+                          fill={100}
+                          prefill={100}
+                          size={PixelRatio.roundToNearestPixel(246 * rem)}
+                          width={PixelRatio.roundToNearestPixel(20 * rem)}
+                          tintColor="#FFFFFF00"
+                          backgroundColor="#27C556"
+                        >
+                          {() => (
+                            <WhiteStandardText
+                              style={{
+                                fontSize: PixelRatio.roundToNearestPixel(
+                                  30 * rem,
+                                ),
+                              }}
+                            >
+                              Completed
+                            </WhiteStandardText>
+                          )}
+                        </AnimatedCircularProgress>
+                      </View>
+                    )}
+                  </View>
+                ) : (
+                  <View
+                    style={{
+                      width: PixelRatio.roundToNearestPixel(246 * rem),
+                      height: PixelRatio.roundToNearestPixel(246 * rem),
+                    }}
+                  >
+                    <AnimatedChunks
+                      activeChunk={stepReward}
+                      activePercent={percentTillRewarded}
+                      timeTillComplete={timeTillRewarded}
+                      pixel={rem}
+                      animationCompleted={this.rewardCompleted}
+                    />
+                  </View>
+                )}
+                {buttonTitle !== '' && (
+                  <View
+                    style={{
+                      marginTop: PixelRatio.roundToNearestPixel(50 * rem),
+                    }}
+                  >
+                    <Button
+                      primary={claimReward !== 0}
+                      title={buttonTitle}
+                      titleStyle={{
+                        fontSize: PixelRatio.roundToNearestPixel(16 * rem),
+                        fontWeight: 'bold',
+                      }}
+                      buttonStyle={{
+                        width: PixelRatio.roundToNearestPixel(327 * rem),
+                        height: PixelRatio.roundToNearestPixel(48 * rem),
+                        borderRadius: PixelRatio.roundToNearestPixel(24 * rem),
+                        backgroundColor: '#27C556',
+                      }}
+                      disabled={
+                        claimReward === 0 ||
+                        !isNetConnected ||
+                        collectInProgress
+                      }
+                      onPress={this.rewardClaim}
+                    />
+                  </View>
+                )}
+              </CardSection>
+            </Card>
+          </ScrollView>
+        </SafeAreaView>
+        <SafeAreaView
+          style={{
+            height: 60,
+            backgroundColor: 'transparent',
+          }}
+        >
+          <LinearGradient
+            colors={['#2b3273', '#0f132a']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            locations={[0.0, 0.99]}
+            style={gradientFixedHeader}
+          />
+          <View style={{ flex: 1, flexDirection: 'row' }}>
+            <View style={{ flex: 1 }}>
+              <Button
+                onPress={this.partnerRedirect}
+                style={{
+                  flex: 1,
+                  flexBasis: 60,
+                  height: 60,
+                }}
+                type="clear"
+                icon={<SVGUri source={logoSVG} />}
+              />
+              <View
+                style={{
+                  position: 'absolute',
+                  flex: 0,
+                  width: 0,
+                  height: 40,
+                  right: 0,
+                  top: 10,
+                  borderRightWidth: StyleSheet.hairlineWidth,
+                  borderRightColor: '#A9BEC799',
+                }}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button
+                onPress={this.ecdRedirect}
+                style={{
+                  flex: 1,
+                  flexBasis: 60,
+                  height: 60,
+                }}
+                type="clear"
+                icon={<SVGUri source={energySVG} />}
+              />
+            </View>
+          </View>
+        </SafeAreaView>
+      </View>
     );
   }
 }
@@ -412,35 +581,27 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 30,
   },
-  modalContent: {
-    backgroundColor: '#151B3B',
-    alignSelf: 'center',
-    padding: 20,
+  gradientFixedHeader: {
+    flex: 1,
+    opacity: 0.5,
+    position: 'absolute',
+    width: '100%',
+    height: PixelRatio.roundToNearestPixel(120 * rem),
+    borderBottomEndRadius: PixelRatio.roundToNearestPixel(20 * rem),
+    borderBottomStartRadius: PixelRatio.roundToNearestPixel(20 * rem),
   },
-  modalHeader: {
-    flexDirection: 'row',
-    marginBottom: 10,
-    borderBottomColor: '#ffffff2a',
-    borderBottomWidth: 1,
+  pageStyle: { flex: 1, backgroundColor: '#0c0f20' },
+  container: {
+    flex: 1,
+    backgroundColor: 'rgba(52, 52, 52, 0)',
+    padding: PixelRatio.roundToNearestPixel(23 * rem),
+  },
+  bigFont: { fontSize: PixelRatio.roundToNearestPixel(30 * rem) },
+  separateText: {
+    paddingBottom: PixelRatio.roundToNearestPixel(10 * rem),
+    paddingTop: PixelRatio.roundToNearestPixel(3 * rem),
     alignItems: 'center',
-    paddingBottom: 20,
   },
-  separator: {
-    borderBottomWidth: 1,
-    borderColor: '#ffffff1a',
-    paddingBottom: 5,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  container: { flex: 1, backgroundColor: '#0c0f21', padding: 15 },
-  iconHelp: { width: 20, height: 20, marginLeft: 8, marginBottom: 7 },
-  modalHeaderIcon: { width: 20, height: 20, marginRight: 20 },
-  modalHeaderText: { fontSize: 22 },
-  bigFont: { fontSize: 30 },
-  percentText: { alignItems: 'center', paddingTop: 30 },
-  separateText: { paddingBottom: 10, paddingTop: 3 },
 });
-
 export default Portal;
