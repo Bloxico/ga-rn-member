@@ -30,8 +30,6 @@ export default class AnimatedChunks extends Component<Props, State> {
     newTime: 0,
   };
 
-  circularProgress: any;
-
   componentWillReceiveProps(nextProps: any): void {
     const { activePercent, timeTillComplete } = nextProps;
     // const { timeTillComplete: oldTime } = this.props;
@@ -51,6 +49,8 @@ export default class AnimatedChunks extends Component<Props, State> {
     }
   }
 
+  circularProgress: any;
+
   render() {
     const {
       activeChunk,
@@ -66,7 +66,7 @@ export default class AnimatedChunks extends Component<Props, State> {
           height: PixelRatio.roundToNearestPixel(246 * pixel),
         }}
       >
-        {timeTillComplete && (
+        {timeTillComplete !== undefined && (
           <View
             style={{
               flex: 1,

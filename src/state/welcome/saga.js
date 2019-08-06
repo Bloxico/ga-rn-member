@@ -19,14 +19,15 @@ export function* login$({ payload: { navigation } }: any): Generator<*, *, *> {
       accessToken,
     );
     // login with credential
+    const deviceId = yield AsyncStorage.getItem('@DeviceId');
     const firebaseUserCredential = yield firebase
       .auth()
       .signInWithCredential(credential);
 
-    if (user && firebaseUserCredential) {
+    if (user && firebaseUserCredential && deviceId) {
       yield put(
         actions.loginSuccess({
-          user: { ...user, uid: firebaseUserCredential.user.uid },
+          user: { ...user, uid: firebaseUserCredential.user.uid, deviceId },
         }),
       );
 
@@ -40,7 +41,7 @@ export function* login$({ payload: { navigation } }: any): Generator<*, *, *> {
         .once(
           'value',
           snapshot => {
-            if (!snapshot.val())
+            if (!snapshot.val()) {
               firebase
                 .database()
                 .ref(`/users`)
@@ -49,7 +50,9 @@ export function* login$({ payload: { navigation } }: any): Generator<*, *, *> {
                 .update({
                   email: user.email,
                   name: user.name,
+                  requiresToken: true,
                 });
+            }
           },
           () => {
             // TODO@tolja error implement
@@ -86,39 +89,31 @@ export function* isLogged$({
     }
 
     if (isLogged) {
-      const userInfo = yield GoogleSignin.getCurrentUser();
+      const {
+        user,
+        idToken,
+        accessToken,
+      } = yield GoogleSignin.signInSilently();
 
-      if (userInfo) {
-        const { user } = userInfo;
+      const credential = yield firebase.auth.GoogleAuthProvider.credential(
+        idToken,
+        accessToken,
+      );
 
-        yield put(actions.isLoggedSuccess({ user: { ...user, deviceId } }));
-      } else {
-        const {
-          user,
-          idToken,
-          accessToken,
-        } = yield GoogleSignin.signInSilently();
+      // login with credential
+      const {
+        user: { uid },
+      } = yield firebase.auth().signInWithCredential(credential);
 
-        const credential = yield firebase.auth.GoogleAuthProvider.credential(
-          idToken,
-          accessToken,
-        );
-
-        // login with credential
-        const {
-          user: { uid },
-        } = yield firebase.auth().signInWithCredential(credential);
-
-        yield put(
-          actions.isLoggedSuccess({
-            user: {
-              ...user,
-              uid,
-              deviceId,
-            },
-          }),
-        );
-      }
+      yield put(
+        actions.isLoggedSuccess({
+          user: {
+            ...user,
+            uid,
+            deviceId,
+          },
+        }),
+      );
 
       yield navigation.navigate('Dashboard');
     }

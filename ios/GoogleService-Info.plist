@@ -2,39 +2,37 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>AD_UNIT_ID_FOR_BANNER_TEST</key>
-	<string>ca-app-pub-3940256099942544/2934735716</string>
-	<key>AD_UNIT_ID_FOR_INTERSTITIAL_TEST</key>
-	<string>ca-app-pub-3940256099942544/4411468910</string>
 	<key>CLIENT_ID</key>
-	<string>993690801094-36qnl60buiee30ghbc3vd81oqqt2kj1i.apps.googleusercontent.com</string>
+	<string>850160165097-etsc07b4bnuq7vdodnt5bllnc9prfemg.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.993690801094-36qnl60buiee30ghbc3vd81oqqt2kj1i</string>
+	<string>com.googleusercontent.apps.850160165097-etsc07b4bnuq7vdodnt5bllnc9prfemg</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>850160165097-mml1iuck2mksie0fd36o5l1o1ofopl6m.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
-	<string>AIzaSyDI9Ub3cz-i_9Jun4epwUqKms2FsRXxCbU</string>
+	<string>AIzaSyDbG4ez7XKc3eM6ZxtKslDLlE1xiT7ERas</string>
 	<key>GCM_SENDER_ID</key>
-	<string>993690801094</string>
+	<string>850160165097</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>org.reactjs.native.example.GAMember</string>
+	<string>com.bloxico.gaMember</string>
 	<key>PROJECT_ID</key>
-	<string>greenauth-36f21</string>
+	<string>green-charge-8bba4</string>
 	<key>STORAGE_BUCKET</key>
-	<string>greenauth-36f21.appspot.com</string>
+	<string>green-charge-8bba4.appspot.com</string>
 	<key>IS_ADS_ENABLED</key>
-	<true></true>
+	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
 	<false></false>
 	<key>IS_APPINVITE_ENABLED</key>
-	<false></false>
+	<true></true>
 	<key>IS_GCM_ENABLED</key>
 	<true></true>
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:993690801094:ios:47e56a0556ea0fb3</string>
+	<string>1:850160165097:ios:ddfa7f3f5d0bea52</string>
 	<key>DATABASE_URL</key>
-	<string>https://greenauth-36f21.firebaseio.com</string>
+	<string>https://green-charge-8bba4.firebaseio.com</string>
 </dict>
 </plist>

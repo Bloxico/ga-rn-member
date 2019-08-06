@@ -21,6 +21,10 @@
               ".read": "$uid === auth.uid",
               ".write": false
             },
+            "last_insert_date": {
+              ".read": false,
+              ".write": false
+            },
             "claim_ios": {
               ".read": "$uid === auth.uid",
               ".write": "$uid === auth.uid"
@@ -29,13 +33,25 @@
         }
       }
     },
-    "rewards": {
+    "suspicious": {
+      ".read": false,
+      ".write": false
+    },
+    "partner": {
+      ".read": false,
+      ".write": false
+    },
+    "exchange_rate": {
       ".read": false,
       ".write": false
     },
     "pushKeys": {
-      ".write": "newData.hasChildren([ 'pushToken' ])",
-      ".read" : false
+      "$token": {
+        ".write": "newData.hasChildren([ 'pushToken' ])",
+        ".read" : false,
+      }
     }
   }
 }
+
+

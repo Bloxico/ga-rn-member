@@ -7,6 +7,8 @@ import SVGUri from 'react-native-svg-uri';
 import { Card, CardSection, Spinner, WhiteStandardText, Button } from '@ui';
 // $FlowIssue
 import google from '@images/Google.svg';
+// $FlowIssue
+import logo from '@images/Logo.svg';
 
 type Props = {
   login: Function,
@@ -52,7 +54,9 @@ class Register extends Component<Props> {
         <Card style={registerTable}>
           <ScrollView contentContainerStyle={scrollViewContent}>
             <CardSection style={logoColumn}>
-              <View style={logoSize}>{/*<SVGUri source={logo} />*/}</View>
+              <View style={logoSize}>
+                <SVGUri source={logo} />
+              </View>
 
               <WhiteStandardText style={logoTextStyle}>
                 Welcome to GreenCharge!
@@ -102,7 +106,7 @@ const styles = StyleSheet.create({
   logoSize: {
     width: 64,
     height: 64,
-    // transform: [{ rotate: '-90deg' }],
+    transform: [{ rotate: '-90deg' }, { scaleX: -1 }, { scaleY: 1 }],
     marginBottom: 15,
   },
   googleIcon: {

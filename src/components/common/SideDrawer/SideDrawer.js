@@ -76,7 +76,7 @@ export default class drawerContentComponents extends Component<Props> {
             <ScrollView>
               <TouchableOpacity onPress={this.partnerRedirect}>
                 <View style={{ ...drawerItem }}>
-                  <WhiteStandardText>Verdeus Platform</WhiteStandardText>
+                  <WhiteStandardText>GOG Platform</WhiteStandardText>
                 </View>
               </TouchableOpacity>
               <TouchableOpacity onPress={this.ecdRedirect}>

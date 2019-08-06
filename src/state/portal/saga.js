@@ -21,46 +21,39 @@ import http from '@http';
 import * as actions from './actions';
 
 export function* fetchBattery$({
-  payload: { level, isCharging, user, updateClaim = true },
+  payload: { level, isCharging, user, events },
 }: any): Generator<*, *, *> {
   try {
     let batteryList = [];
-    let sumRewards = 0;
-    let currentReward = 0;
-    let lastClaim;
     let { deviceId } = user;
 
     if (!user.devideId) {
       deviceId = yield AsyncStorage.getItem('@DeviceId');
     }
 
-    const batteryLevelRef = firebase
-      .database()
-      .ref(`/users/${user.uid}/devices/${deviceId}`);
+    let storageReward = yield AsyncStorage.getItem('@CollectingReward');
 
-    batteryLevelRef.keepSynced(true);
+    if (events.length > 0) {
+      batteryList = events;
+    } else {
+      const batteryLevelRef = firebase
+        .database()
+        .ref(`/users/${user.uid}/devices/${deviceId}`);
 
-    yield batteryLevelRef.once(
-      'value',
-      snapshot => {
-        snapshot.val().events.forEach(val => {
-          batteryList.push(val);
-        });
+      batteryLevelRef.keepSynced(true);
 
-        if (snapshot.child('current_reward').exists()) {
-          currentReward = snapshot.val().current_reward.reward;
-        }
-
-        if (snapshot.child('claim_ios').exists()) {
-          lastClaim = snapshot.val().claim_ios;
-        }
-
-        sumRewards = snapshot.val().sum_rewards;
-      },
-      () => {
-        // TODO@tolja implement error
-      },
-    );
+      yield batteryLevelRef.once(
+        'value',
+        snapshot => {
+          snapshot.val().events.forEach(val => {
+            batteryList.push(val);
+          });
+        },
+        () => {
+          // TODO@tolja implement error
+        },
+      );
+    }
 
     const latestEvent = {
       currentPercentage: level,
@@ -181,20 +174,31 @@ export function* fetchBattery$({
                 'value',
                 snapshot => {
                   if (snapshot.val()) {
-                    const currentReward = snapshot.val().reward + reward;
+                    let updatedReward = snapshot.val().reward + reward;
+                    if (storageReward)
+                      storageReward = JSON.parse(storageReward);
+
+                    if (
+                      storageReward &&
+                      storageReward.id === user.deviceId &&
+                      storageReward.currentLevel > 0 &&
+                      storageReward.rewardTime >=
+                        new Date(events[0].timestamp).getTime()
+                    )
+                      updatedReward -= REWARD_SUM[storageReward.currentLevel];
 
                     firebase
                       .database()
                       .ref(`/users/${user.uid}/devices/${deviceId}`)
                       .child('current_reward')
-                      .update({ reward: currentReward });
+                      .update({ reward: updatedReward });
                   } else {
                     firebase
                       .database()
                       .ref(`/users/${user.uid}/devices/${deviceId}`)
                       .child('current_reward')
                       .set({
-                        reward: reward,
+                        reward,
                         timestamp: new Date().getTime(),
                         email: user.email,
                       });
@@ -207,11 +211,6 @@ export function* fetchBattery$({
           }
 
           re[0].rewardPreventedTime = obj.timestamp;
-          firebase
-            .database()
-            .ref(`/users/${user.uid}/devices/${deviceId}/claim_ios`)
-            .child('timestamps')
-            .push({ time: batteryList[0].timestamp });
         }
       }
       if (batteryList.length < 2) re[0].timeTillRewarded = REWARD_STEPS[0] * 60;
@@ -228,43 +227,12 @@ export function* fetchBattery$({
       .child('events')
       .set(newBatteryList);
 
-    let timestamp = batteryList[0].timestamp;
-
-    if (
-      lastClaim &&
-      lastClaim.timestamps &&
-      !(new Date(lastClaim.time) >= new Date(timestamp))
-    ) {
-      timestamp = Object.values(lastClaim.timestamps).sort(function(a, b) {
-        // $FlowIssue
-        return new Date(a.time) - new Date(b.time);
-        // $FlowIssue
-      })[0].time;
-    }
-
-    if (lastClaim && new Date(lastClaim.time) >= new Date(timestamp)) {
-      if (a[0].stepReward === 0) {
-        currentReward -= REWARD_SUM[lastClaim.currentLevel];
-      } else
-        currentReward =
-          currentReward +
-          REWARD_SUM[a[0].stepReward] -
-          REWARD_SUM[lastClaim.currentLevel];
-    } else {
-      currentReward += REWARD_SUM[a[0].stepReward];
-    }
-
     const stepReward = newBatteryList[newBatteryList.length - 1].chargingStatus
       ? 0
       : a[0].stepReward;
 
-    if (!updateClaim) currentReward = 0;
-
     yield put(
       actions.fetchBatterySuccess({
-        // batteryList: newBatteryList,
-        reward: sumRewards,
-        toClaimReward: currentReward,
         stepReward,
         percentTillRewarded: a[0].percentTillReward,
         timeTillRewarded: a[0].timeTillRewarded,
@@ -276,29 +244,32 @@ export function* fetchBattery$({
 }
 
 export function* claimReward$({
-  payload: { reward, currentLevel, user, sumReward },
+  payload: { currentLevel, user, reward },
 }: any): Generator<*, *, *> {
   try {
+    const rewardTime = new Date().getTime();
+
     yield firebase
       .database()
       .ref(`/users/${user.uid}/devices/${user.deviceId}`)
       .child('current_reward')
       .set({
-        reward: reward,
-        timestamp: new Date().getTime(),
-        email: user.email,
         claimable: true,
+        currentLevel,
+        timestamp: rewardTime,
+        reward,
+        email: user.email,
+        error: false,
       });
+    const storageReward = { rewardTime, currentLevel, id: user.deviceId };
 
-    yield firebase
-      .database()
-      .ref(`/users/${user.uid}/devices/${user.deviceId}`)
-      .child('claim_ios')
-      .set({ currentLevel, time: new Date(), reward });
+    yield AsyncStorage.setItem(
+      '@CollectingReward',
+      JSON.stringify(storageReward),
+    );
 
     yield put(
       actions.claimRewardsSuccess({
-        reward: sumReward + reward,
         toClaimReward: 0,
       }),
     );
@@ -307,11 +278,7 @@ export function* claimReward$({
   }
 }
 
-export function* pushToken$({
-  payload: {
-    token: { token },
-  },
-}: any): Generator<*, *, *> {
+export function* pushToken$({ payload: { token } }: any): Generator<*, *, *> {
   try {
     const oldToken = yield AsyncStorage.getItem('@DevicePushToken');
 
@@ -329,7 +296,7 @@ export function* pushToken$({
 }
 
 export function* addBattery$({
-  payload: { level, isCharging, user, isBackground, notification },
+  payload: { batteryLevel, isCharging, user, isBackground, notification },
 }: any): Generator<*, *, *> {
   let { deviceId } = user;
 
@@ -357,13 +324,14 @@ export function* addBattery$({
     },
   );
 
-  const batteryLevel = {
-    currentPercentage: level,
+  const batteryObject = {
+    currentPercentage: batteryLevel,
     chargingStatus: isCharging,
     timestamp: new Date(),
+    notification,
   };
 
-  batteryList.push(batteryLevel);
+  batteryList.push(batteryObject);
 
   yield firebase
     .database()
@@ -373,8 +341,6 @@ export function* addBattery$({
     .then(() => {
       if (isBackground)
         BackgroundFetch.finish(BackgroundFetch.FETCH_RESULT_NEW_DATA);
-
-      if (notification) notification.finish('backgroundFetchResultNewData');
     })
     .catch(() => {
       // TODO@tolja error to implement
@@ -391,7 +357,7 @@ export function* ecdRedirect$({ payload: { user } }: any): Generator<*, *, *> {
         'value',
         snapshot => {
           const token = snapshot.val();
-
+          // console.log(user, token);
           const params = {
             grant_type: 'refresh_token',
             refresh_token: token.refreshToken,
@@ -442,7 +408,15 @@ export function* ecdRedirect$({ payload: { user } }: any): Generator<*, *, *> {
                         refreshToken: data.refresh_token,
                       });
                   })
-                  .catch(() => {
+                  .catch(error => {
+                    // console.log(error.response);
+                    firebase
+                      .database()
+                      .ref(`/users/${user.uid}`)
+                      .child('info')
+                      .update({
+                        requiresToken: true,
+                      });
                     // TODO@tolja implement error
                   });
               });
