@@ -303,16 +303,23 @@ class Portal extends Component<Props, State> {
       const reward = claimReward.reward || 0;
       if (
         storageReward &&
-        storageReward.id === user.deviceId &&
         events.length &&
+        storageReward.id === user.deviceId &&
+        storageReward.email === user.email &&
         storageReward.currentLevel > 0 &&
         storageReward.rewardTime >= new Date(events[0].timestamp).getTime()
       ) {
+        let totalClaim =
+          reward +
+          REWARD_SUM[stepReward] -
+          REWARD_SUM[storageReward.currentLevel];
+        if (totalClaim < 0) totalClaim = 0;
+
+        if (storageReward.currentLevel === REWARD_SUPPLY.length)
+          totalClaim = reward;
+
         this.setState({
-          totalClaim:
-            reward +
-            REWARD_SUM[stepReward] -
-            REWARD_SUM[storageReward.currentLevel],
+          totalClaim,
         });
       } else this.setState({ totalClaim: reward + REWARD_SUM[stepReward] });
     } catch (error) {

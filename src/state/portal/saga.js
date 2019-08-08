@@ -181,11 +181,13 @@ export function* fetchBattery$({
                     if (
                       storageReward &&
                       storageReward.id === user.deviceId &&
+                      storageReward.email === user.email &&
                       storageReward.currentLevel > 0 &&
                       storageReward.rewardTime >=
                         new Date(events[0].timestamp).getTime()
                     )
                       updatedReward -= REWARD_SUM[storageReward.currentLevel];
+                    if (updatedReward < 0) updatedReward = 0;
 
                     firebase
                       .database()
@@ -261,7 +263,13 @@ export function* claimReward$({
         email: user.email,
         error: false,
       });
-    const storageReward = { rewardTime, currentLevel, id: user.deviceId };
+
+    const storageReward = {
+      rewardTime,
+      currentLevel,
+      id: user.deviceId,
+      email: user.email,
+    };
 
     yield AsyncStorage.setItem(
       '@CollectingReward',
